@@ -2,3 +2,48 @@
 title: "accel_in_r"
 ---
 
+1. Intialization and setup
+  Why R? - discuss how Python is growing faster and has more resources, but discuss FDA
+      - plug book
+      - stats audience
+      - GGIR
+  - Startup script
+  - RStudio 
+  - Borrow from intro to R
+    - read.gt3x, agcounts, actilifecounts, etc. GGIR
+    - lubridate, tidyverse
+    - ADVANCED - reticulate, walking, stepcount, SummarizedActigraphy
+2. The data
+  - What questions have been answered by this data
+      - activity, sleep, real-world estimates
+  - Sensors, placement - 5 minutes
+  - Sample rate, location, 
+  - Walk through previous NHANES device
+      - what is GT3X
+      - getting attributes/header information
+    - Ax3 (cwa), GGIRread
+      - https://cran.r-project.org/web/packages/GGIRread/index.html
+    - Commercial grade stuff
+      - ActiLife, ActiGraph, ActiGraphConnect
+      - https://www.actigraphcorp.com/
+    - Why start with raw data (algo changes - on device and out in wild, SI units, really the "true" data)
+    - Reading in ActiGraph CSVs
+3. Outline slide
+  - read in data
+  - reasmple data
+  - plot data
+  - Activity Counts/MIMS/AI/ENMO
+  - wear/nonwear estimation
+  - derive steps
+  - Aggregate into "average day"
+  - Disucssion of inclusion criteria/missingness
+4. Read in the data
+  - what is the data
+  - idle sleep mode - LOCF
+  - Calibration 
+  - Vector Norm
+  - Dealing with Time
+  - Dealing with Time Zones
+5. MVPA and Thresholds
+
+10. wristpy and python stuff
