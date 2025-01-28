@@ -1,0 +1,19 @@
+---
+title: "Transforming High-Resolution Accelerometry Data for Analysis"
+format: html
+editor: source
+---
+
+# Abstract
+In this tutorial, we will go through some standard processing steps in order to take raw accelerometer data and turn it into an analyzable endpoint.  All the analysis will be done in R, along with some R packages that call Python using reticulate.  A basic or intermediate knowledge of R will be necessary as most of the tutorial will be related to coding and application of functions.
+
+We will focus on a single subject with an ActiGraph gt3x file.  The pipeline will cover reading the data in, visualizing the data at a day level, performing gravity correction, resampling data, estimating non-wear time using established methods, and calculating activity measures such as Activity Counts and step counts, and summarizing them at a participant level. We will briefly go over analytic methods for these participant summary level data.
+
+Materials will be given and will be made available after the tutorial.
+
+
+# Bios
+## John
+Dr. John Muschelli is an expert R programmer and applied data analyst.  He has authored a number of packages related to complex data, such as neuroimaging and accelerometry, and has co-lead the development of Neuroconductor, a repository for imaging-related R packages.  He has done other tutorials on data processing and analysis, such as Imaging in R (https://johnmuschelli.com/imaging_in_r/).
+## Ciprian
+Dr. Ciprian Crainiceanu is a biostatistical expert in functional and neuroimaging data with methodological expertise in longitudinal, nonparametric, measurement error and Bayesian analysis. His focus on two major areas of research: wearable biosensors and neuroimaging. I am one of the leaders in the design of experiments and Biostatistical analysis for very large wearable biosensor data including electroencephalograms (EEG), accelerometry, and heart monitors. He is a lead author on the "Functional Data Analysis with R" book (2024).
