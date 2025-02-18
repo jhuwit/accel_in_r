@@ -1507,7 +1507,7 @@ The corresponding output from this pipeline can be seen in @fig-ggir-output.  Th
 #| label: fig-ggir-output
 #| fig-cap: Output files and folder structure from the GGIR pipeline.  We see a number of CSV files, PDF reports, and R data files for use in analysis and quality checking.
 #| echo: false
-knitr::include_graphics("images/ggir_output.png")
+knitr::include_graphics(here::here("images/ggir_output.png"))
 ```
 
 The `GGIR` pipeline is comprehensive and has a number of options available for analysts, but may be overwhelming to users. We aim to break each step down in this tutorial, describing the intent of each step and its potential issues.  

@@ -1,0 +1,111 @@
+---
+title: "Introduction to Accelerometer Data"
+author: "John Muschelli and Lily Koffman"
+format: 
+  revealjs:
+    theme: default
+    slide-number: true
+    transition: fade
+    progress: true
+    center: false
+    width: 1200
+    height: 700
+    background: background.png
+    logo: jhu.png
+---
+
+## Introduction to Accelerometer Data
+
+### Learning Objectives
+
+- Understand the basics of accelerometer data
+- Learn the difference between wrist-worn and other accelerometers
+- Explore key applications in health research
+
+::: {.notes}
+Speaker notes go here.
+:::
+
+---
+
+## What is Accelerometer Data?
+
+- **Sensor that measures acceleration** in 3D space
+  - X-axis: Left-Right
+  - Y-axis: Up-Down
+  - Z-axis: Forward-Backward
+- Typically measured in **g-forces (g)** or **m/s²**
+- Sampled at regular time intervals (e.g., 30Hz, 100Hz)
+
+---
+
+## How Does It Work?
+
+1. Small **MEMS accelerometer** inside a wearable device
+2. Measures acceleration by detecting **motion and gravitational forces**
+3. Outputs time-series data: raw acceleration signals
+
+```plaintext
+Timestamp     X        Y        Z
+2025-02-17   0.02     0.98     0.03
+2025-02-17   0.04     0.95     0.05
+2025-02-17  -0.01     0.99     0.02
+```
+
+---
+
+## Wrist-Worn vs. Hip-Worn Accelerometers
+
+| Feature       | Wrist-Worn Devices  | Hip-Worn Devices  |
+|--------------|------------------|-----------------|
+| Placement    | Worn on wrist    | Attached to belt |
+| Compliance   | Higher           | Lower           |
+| Activity Types | Captures arm movements | Better for whole-body movement |
+| Sleep Analysis | Better for sleep patterns | Less accurate |
+
+---
+
+## Common Data Formats
+
+- **Raw Accelerometer Data** (high-resolution time-series data)
+- **Activity Counts** (aggregated over time windows)
+- **Wear Time Detection** (non-wear vs. wear periods)
+- **Energy Expenditure Estimation** (calories burned estimation)
+
+---
+
+## Applications in Health Research
+
+- **Physical Activity Measurement**
+  - Quantifies sedentary behavior, light, moderate, and vigorous activity
+- **Sleep Monitoring**
+  - Detects sleep patterns, wake episodes
+- **Fall Detection & Mobility Analysis**
+  - Identifies changes in gait and risk of falls
+- **Chronic Disease Monitoring**
+  - Links between movement patterns and cardiometabolic diseases
+
+---
+
+## Example Studies
+
+- **NHANES Accelerometry (CDC)**
+  - Large-scale population studies using wrist-worn devices
+- **UK Biobank Wearable Data**
+  - Over 100,000 participants with 7-day wrist accelerometer recordings
+
+---
+
+## Summary
+
+- **Accelerometers measure movement** in three axes
+- **Wrist-worn vs. hip-worn** sensors have different strengths
+- **Common applications** include physical activity, sleep monitoring, and disease tracking
+- **Key public datasets** provide rich sources for research
+
+---
+
+## Next Steps
+
+- Hands-on: Explore sample accelerometer datasets
+- Learn preprocessing: Handling missing data and noise filtering

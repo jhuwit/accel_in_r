@@ -1,0 +1,1531 @@
+---
+title: "Processing Pipeline for Wrist-Worn Accelerometers"
+format: 
+  pdf:
+    toc: true
+    colorlinks: true
+    number-sections: true
+    number-depth: 3
+  html:
+    toc: true
+    colorlinks: true
+    number-sections: true
+    number-depth: 3
+editor: source
+bibliography: references.bib
+---
+
+# Introduction
+
+
+Physical activity (PA) is an important component of health and contributes to mortality risk [@pa_benefits]. Recent developments in wearable technology, including wearable accelerometers, have allowed objective assessment of physical activity in free-living settings. Wearable-device derived summaries of PA have been shown to be more accurate than self-reported measures [@Prince2008].  Compared to devices worn on the hip or waist, accelerometers worn at the wrist are more comfortable for participants and thus improve adherence [@troiano2014evolution].  Wrist-worn devices can provide other measures, such as heart rate and pulse oximetry through the skin.  Here we will focus on accelerometry and an open-source pipeline to process it.
+
+Here we will go through some standard processing steps in order to take raw accelerometer data and turn it into an analyzable endpoint.  
+
+Estimating objective, free-living PA measures via wrist-worn accelerometers has become more common, especially in larger studies in recent years.  For example, the 2003-2006 waves from the National Health and Nutrition Examination Survey (NHANES) used a single-axial hip-worn accelerometer [@troiano2008physical], whereas the two waves from 2011-2014 used tri-axial wrist-worn accelerometers.  Specifically, NHANES 2011-2014 used an ActiGraph (Pensacola, FL USA) GT3X+ device.  The UK Biobank which measured over 100,000 participants from the United Kingdom (UK) from 2013-2015 with a wrist-worn Axivity AX3 device (Newcastle upon Tyne, England UK). The ongoing All of US study uses a FitBit Bring Your Own Device (BYOD) model and provides wrist-worn FitBit devices to participants [@master2022association].  
+
+The PA estimates from accelerometers capture different types of activity depending on the placement of the device and signals from different parts of the body are different for the same activities. Accelerometry data from wrist-worn devices is more noisy than data collected from the hip, thigh, or waist due to human range of motion.  Moreover, many methods and algorithms for accelerometry were derived from and trained on hip-worn data.  Not all algorithms perform equally at the hip versus the wrist, and many fundamentally fail when applied to data from another body area.  For example, the ActiGraph step counting algorithm implemented in the ActiGraph ActiLife software is based on accelerations at the hip, derived from a single-axis accelerometer and is not recommended for wrist data [@john2018step].
+
+The aim of this tutorial is to present algorithms and methods explicitly derived for or from wrist-worn data and present an open-source processing pipeline for high-frequency wrist-worn accelerometer data, along with the pipeline code in the R language [@R].  Our pipeline will read in wrist-worn high frequency data, perform gravity correction, resample data, estimate non-wear, and derive summary measures for analysis.  To demonstrate these steps, we will perform the pipeline on one participant.
+
+The pipeline requires sub-second level data, typically in the order of 30Hz to 100Hz data of accelerations (in gravity units $g$), for 3 axes (X, Y, Z).  This level of data can be difficult to extract or is often not provided by commercial devices. Sub-second level data in $g$ are robust to changes in devices, firmware, and software as: 1) these are not typically manipulated prior to export, 2) they have real-world units ($g$), and 3) provide the same units and formats across devices.  Proprietary summaries may change with software or firmware updates, which complicates analysis over time.  We will not discuss the optimal positioning of the accelerometer for specific purposes or estimating different activity metrics. 
+
+In this tutorial, we will estimate several summary measures of PA. Aggregated summaries may be a starting point for analysis, but are not a starting point for processing.  Crucial information on how the data was aggregated may be missing or not sufficiently documented (e.g. how was it averaged, was there truncation, etc.) and these aggregation steps can substantially impact summary measures. Second-level data may not provide the detail required for some algorithms or methods, such as step counting, gait analysis, or frequency transformations. While aggregating the data into seconds, minutes, days, or other temporal summary measures provides the measures of interest for analysis, we are focused on getting to the aggregation step of the process.  Different analysis options exist, which may inform processing methods, so we focus on a popular set of methods that have large applications for analysis.
+
+<!-- Most notably, many derivative measurements require sub-second level data such as ActiGraph activity counts (AC), which algorithm and software was released publicly [@neishabouri2022quantification].  As AC have been used in a number of studies [CITE], thresholds for activity levels have been presented for AC [cite], and a number of non-wear algorithms were derived by AC [CHOI, TROIANO], we will discuss them throughout.  Now, calculating AC from non-ActiGraph devices, comparing results from previous AC work is much more straightforward than in the past.  Interpretable measures with standard units exist, such as Euclidean Norm Minus One (ENMO) [cite], the activity index (AI) [cite], median absolute deviation (MAD), and Monitor-Independent Movement Summary (MIMS).  The previous extensive use activity counts warrants a pipeline that calculates them, allowing a comparison to previous work and previously derived population-specific thresholds to be used.  If AC is not of interest, the remaining steps are relevant and cross-measure thresholds can be used [CITE MARTA] -->
+
+!! Should we focus on AC over other things to contrast why we're doing this or just no?
+
+We will present each step in the processing pipeline, and explain why each step is suggested. We acknowledge that other processing choices are available, including complete pipelines. For example, one can process all of their data in the ActiGraph ActiLife software. Centrepoint, ActiGraph's cloud-based software platform for collecting, processing, and managing data, will provide a number of tools not available here.  Open source solutions also exist, most notably those from GGIR [@migueles2019ggir].  Our primary analysis will be in R, but a number of Python modules and MATLAB scripts are available, such as pyActigraphy [@hammad2021pyactigraphy], accelerometer [@doherty2017large], and those from the ActiGraph team (https://github.com/actigraph).  
+
+We use pieces of processing from a number of packages and tools and discuss the differences between our proposed pipeline and these methods, including additional metrics that can be computed or derived.  The pipeline is not exhaustive and multiple packages have implementation of the same methods, so we implore users to explore other packages and tools, but would like to provide a foundation for researchers analyzing this type of data.
+
+!! Stronger case for pipeline here
+
+```{r setup}
+#| include: false
+stepcount::unset_reticulate_python()
+clist = reticulate::conda_list()
+Sys.setenv(RETICULATE_PYTHON = clist$python[clist$name == "stepcount"])
+try({stepcount::use_stepcount_condaenv()})
+library(read.gt3x)
+library(SummarizedActigraphy)
+library(dplyr)
+library(tidyr)
+library(readxl)
+library(here)
+library(ggplot2)
+library(lubridate)
+library(stepcount)
+library(patchwork)
+options(digits.secs = NULL)
+```
+
+```{r}
+#| include: false
+meta = readr::read_rds(here::here("data/metadata.rds"))
+meta = meta %>% 
+  mutate(
+    has_prosthesis = !is.na(`Time_since_prescription_of_a_myoelectric_prosthesis_(years)`)
+  ) %>% 
+  select(id, abs_side = `Absence_side_(*previously_dominant)`,
+         left = Left_Sensor, right = Right_Sensor,
+         has_prosthesis
+  ) %>% 
+  mutate(
+    side_dominant = case_when(
+      abs_side == "R*" ~ "right",
+      abs_side == "L*" ~ "left",
+      abs_side == "R" ~ "left",
+      abs_side == "L" ~ "right",
+      TRUE ~ NA_character_
+    ),
+    abs_side = sub("[*]", "", abs_side),
+    abs_side = case_when(
+      abs_side == "R" ~ "right",
+      abs_side == "L" ~ "left",
+      TRUE ~ NA_character_
+    )
+  )
+meta = meta %>% 
+  pivot_longer(cols = c(left, right), values_to = "serial",
+               names_to = "side")
+meta = meta %>% 
+  mutate(id_full = paste0(id, "_", serial))
+```
+
+# Data
+
+## Data Format 
+For this tutorial, we will use a file with the extension `.gt3x`, which represents an ActiGraph GT3X file.  This file can be from a number of different models from the ActiGraph series of different versions of accelerometers (e.g. GT9X, GT3X+, wGT3X+)  A GT3X file is a binary file with a specification [provided by ActiGraph](https://github.com/actigraph/GT3X-File-Format).
+
+The different specifications are currently of 2 different kinds, with the older version denoted as the "NHANES" version (with additional [documentation](https://github.com/actigraph/NHANES-GT3X-File-Format)).  Mainly, the specification differences relate to how the data is stored and the scaling factors for conversion to gravity units ($g$).  Although we have not done a strong comparison of the previous specification versus the newer specification, as this would require measuring the data with different versions of the accelerometers, we assume the resulting output after scaling and extraction gives similar acceleration measures. 
+
+The code below will indicate if the specification is of the older or newer versions in the metadata.  Overall, this specification difference is not reported in the literature or analysis and can be ignored by most researchers.  Metadata such as this is important when comparing studies of different devices or when devices change over the course of a study.  Otherwise unintended artifacts may be introduced. In most analyses, these differences are ignored because the device has not changed throughout.
+
+## Data File
+The file `AI15_MOS2D09170398_2017-10-30.gt3x` was downloaded from a [Figshare repository](https://springernature.figshare.com/collections/Upper_limb_activity_of_twenty_myoelectric_prosthesis_users_and_twenty_healthy_anatomically_intact_adults_/4457855) of data @upper_limb_figshare, which was released with the publication @chadwell2019upper.  The data contains GT3X files, derivative count-level data at different temporal resolutions, and participant-provided diaries of activities done.  This code will download the file into the `data/` sub-directory if it does not already exist.
+
+```{r specify_file_run}
+#| include: false
+#| cache: true
+gt3x_file = here::here("data/AI15_MOS2D09170398_2017-10-30.gt3x")
+if (!file.exists(gt3x_file)) {
+  # https://github.com/muschellij2/Wrist-Worn-Accelerometry-Processing-Pipeline
+  url = paste0("https://github.com/muschellij2/", 
+               "Wrist-Worn-Accelerometry-Processing-Pipeline", 
+               "/raw/main/",
+               "data/AI15_MOS2D09170398_2017-10-30.gt3x")
+  curl::curl_download(url = url, destfile = gt3x_file)
+}
+```
+
+```{r specify_file_show}
+#| eval: false
+gt3x_file = "data/AI15_MOS2D09170398_2017-10-30.gt3x"
+if (!file.exists(gt3x_file)) {
+  # https://github.com/muschellij2/Wrist-Worn-Accelerometry-Processing-Pipeline
+  url = paste0("https://github.com/muschellij2/", 
+               "Wrist-Worn-Accelerometry-Processing-Pipeline", 
+               "/raw/main/",
+               "data/AI15_MOS2D09170398_2017-10-30.gt3x")
+  curl::curl_download(url = url, destfile = gt3x_file)
+}
+```
+
+```{r get_handed_info}
+#| echo: false
+stub = sub("[.]gt3x.*", "", basename(gt3x_file))
+stub = sub("_20.*", "", stub)
+data_side = meta %>% filter(id_full == stub)
+stopifnot(nrow(data_side) == 1)
+side_of_absence = ifelse(
+  data_side$side == data_side$abs_side,
+  "the side of absence",
+  "not the side of absence")
+side = data_side$side
+has_prothesis = ifelse(data_side$has_prosthesis,
+                       "with a prosthesis",
+                       "without a prosthesis")
+```
+
+
+The file is from a study of participants with and without prostheses.  This file measures accelerations from the `r side` side of the body, which was `r side_of_absence`, for a the patient `r has_prothesis`.
+
+## Reading in a GT3X file
+
+Here we will read in the GT3X file using the `read.gt3x::read.gt3x` function. 
+(Aside: any code with the double colon indicates `package::function` to inform users which package a function is from.  If a package is not prefixed, the package has been loaded into memory using `library(package)`).  
+
+```{r read_data}
+#| cache: true
+#| dependson: specify_file_run
+df = read.gt3x::read.gt3x(path = gt3x_file, 
+                          asDataFrame = TRUE, 
+                          imputeZeroes = TRUE)
+```
+
+The option `asDataFrame` ensure the output is a `data.frame` as opposed to a matrix (the default).  The option `imputeZeroes` relates to idle sleep mode in ActiGraph - which we will discuss in @sec-idle-sleep-mode.
+
+
+Here we can take a look at the data:
+```{r head_df}
+head(df)
+```
+We see 1 column for the timestamp and the 3 axes.  Overall, the order of the X and Y axes are not crucial for wrist-worn data, but ActiGraph and other software may refer these to Axes 1-3 and sometimes switch Axis2 with `X` and Axis1 for `Y`.  If you see disagreement between this output and ActiGraph raw data, check the labeling of the axes.
+
+
+We also see a header of information about the sampling rate, firmware version, and serial prefix.  We see the class of the data output:
+
+```{r class_df}
+class(df)
+```
+
+The data is a `data.frame` but also a `activity_df`, which is why the header information is printed compared to a standard `data.frame`.  A number of attributes are added to the `data.frame` when read in using `read.gt3x`:
+
+```{r attributes_df}
+names(attributes(df))
+```
+
+Using the `attr` function, we can extract attributes such as the sampling rate:
+```{r sample_rate}
+attr(df, "sample_rate")
+```
+In many cases, we want to extract these attributes since performing certain operations may lose these attributes.  We will show specific reasons to do this conversion for printing in @sec-timestamps. 
+
+Using `attr_list = attributes(df)`, we extract the whole list of attributes, but note this also includes row names and column names of the original data, where row names (or indices) can be somewhat long depending on data size.  This data size is usually not a large concern, but assigning this attribute list to a different `data.frame` (such as `attributes(new_data) = attr_list`) may cause unintended effects.  For example, if row/column names are assigned to this `data.frame` using `attr_list`, but the columns could have changed or variables have been added/dropped.
+
+A number of attributes are important, but specifically, the `sample_rate` and `acceleration_*` ones are necessary.  For example, calculating MIMS [@mims] (@sec-mims) requires the acceleration bounds for calculation.  Many functions taking in data without a timestamp require the `sample_rate` argument and even those that take in time stamps may estimate the sample rate differently or incorrectly estimate the sample rate if the samples are not uniform.
+
+
+### Other Data Formats
+ActiGraph GT3X files are common in accelerometry, but not the only types of data.  The [`GGIRread`](https://github.com/wadpac/GGIRread) package can read in 
+Axivity, GENEActiv, and Genea types of accelerometer data.  Most software with different devices will provide the data as a CSV or spreadsheet file, which can be read in using the `readr` or `readxl` packages in R.  For example, ActivPal devices can provide an output CSV.  Regardless, the next steps assume the data is in a `data.frame` format with columns of a timestamp and the 3 axes of acceleration.  
+
+## Timestamps and Common Issues/Recommendations {#sec-timestamps}
+Whenever working with data with timestamps in milliseconds in `R`, you should set the option `digits.secs` to a value (usually 3) that indicates how many digits past 0 should be displayed for seconds.  This option allows users to see quickly if the milliseconds are embedded or truncated.  
+
+Users can check what this value is set to with the code `getOption("digits.secs")`.  The default is `NULL`, which indicates no milliseconds should be displayed.  The `activity_df` class has a specific case that sets `digits.secs` to 3 so it can be displayed.  The link to the underlying source code demonstrating this is located [here](https://github.com/THLfi/read.gt3x/blob/a41037a5ab1390b5393ee09efacac08a44432a77/R/readGT3X.R#L421).  
+
+```{r head_df_digits_activity_df}
+head(df)
+```
+
+If we display the data in a `data.frame` and the option is not set, we will not see milliseconds:
+
+```{r quick_reset}
+#| echo: false
+options(digits.secs = NULL)
+```
+
+```{r head_df_digits_show}
+#| eval: false
+as.data.frame(df)
+```
+```{r head_df_digits}
+#| echo: false
+head(as.data.frame(df), n = 3)
+```
+
+nor will we see it when we print the time vector:
+
+```{r print_time}
+head(df$time)
+```
+
+
+We should likely set this option in the header of any scripts analyzing milliseconds-level data:
+
+```{r set_digits_secs}
+options(digits.secs = 3)
+```
+
+Unfortunately, the default options for printing `data.frame`s do not display the millisecond data:
+
+```{r head_df_digits3}
+head(as.data.frame(df), n = 3)
+```
+
+but we can see the milliseconds if we print the times:
+
+```{r print_time_3}
+head(df$time)
+```
+
+We can also see the milliseconds by using the `digits` argument in `print`:
+
+```{r print_head}
+print(head(as.data.frame(df)), digits = 3)
+```
+
+If we display the data using a `tibble`, we see milliseconds are displayed, but we lose the header as the data is no longer a `activity_df`:
+
+
+```{r tibble}
+(tbl_data = tibble::as_tibble(df))
+```
+
+In the conversions from `activity_df` to `tibble`, the attributes are retained, but it is a good consistency check to ensure certain attributes are still retained in the data:
+```{r}
+attr(tbl_data, "sample_rate")
+```
+
+Truncation of times can happen during conversion from timestamp types or when writing and then reading from other data formats (e.g. CSV) if milliseconds are not properly accounted for.  As some methods, such as interpolation, may give output that preserves milliseconds while others do not, merging and joining data based on timestamps may have unintended consequences.
+
+Lastly, if we convert time to a numeric, an easy way to check for milliseconds is to use the modulo operator (`%%`):
+
+```{r modulo}
+as.numeric(tbl_data$time[1:5]) %% 1
+```
+Note that the output is not all `0`, indicating the presence of milliseconds. If you are converting a time to a character and would like to retain the milliseconds, you can use the `%OS3` formatting:
+
+```{r format_show}
+#| eval: false
+format(df$time, "%Y-%m-%d %H:%M:%OS3")
+```
+
+```{r format_run}
+#| echo: false
+format(head(df$time), "%Y-%m-%d %H:%M:%OS3")
+```
+
+
+### Time Zones
+For `read.gt3x`, the output data is always in `GMT` time zone, but the information as to which time zone the data was collected in is in the header (bracketed information added to the documentation):
+
+```{r header_timezone}
+attr_list = attributes(df)
+attr_list$header$TimeZone
+```
+
+> Please note that all timestamps are in local time (of the device) even though they are represented as `POSIXct` with `GMT` timezone [in the data].
+
+Although this example has a timezone that is the same as `GMT`, you can set the data to the output timezone with the `lubridate::tz`. The `with_tz` and `force_tz` functions may be useful. Note: these change the data in different ways.  The `lubridate` package will be discussed for more time manipulation other than timezone.
+
+### Using `lubridate`
+
+The `lubridate` package has a number of great functions that make working with dates easier, specifically the `floor_date` function.  For example if you want to floor the time into every 5 minutes, you can easily do that with readable code:
+
+```{r floor_date}
+df %>% 
+  mutate(minute_5 = lubridate::floor_date(time, "5 minutes")) %>% 
+  head()
+```
+
+Combining `floor_date` and `group_by` is powerful for summarizing data or changing data based on a second/minute/hour/day level.  For example, if we want to get the mean acceleration for all 3 axes for 5 minute chunks, we can do that via:
+
+```{r floor_date_group_by}
+#| cache: true
+df %>% 
+  mutate(minute_5 = lubridate::floor_date(time, "5 minutes")) %>% 
+  group_by(minute_5) %>% 
+  summarise(across(c(X, Y, Z), mean))
+```
+
+The `lubridate` `round_date` and `ceiling_date` functions are also available, but are less commonly used in this type of data.  Also, the `tz` and other timezone functions can be useful in harmonizing data and devices.
+
+For example, we can add the timezone `America/Los_Angeles` to the data.  We can take a simple set of times from our data and show the timezone using `tz`: 
+```{r}
+times = head(df$time)
+times
+tz(times)
+```
+
+The `tz(x) <-` and `force_tz` assign a timezone to the object, whereas `with_tz` projects that time into the new timezone and changes the underlying data:
+
+```{r}
+times_pst = times; tz(times_pst) = "America/Los_Angeles"; times_pst
+force_tz(times, "America/Los_Angeles")
+with_tz(times, "America/Los_Angeles")
+
+as.numeric(times_pst)
+as.numeric(force_tz(times, "America/Los_Angeles"))
+as.numeric(with_tz(times, "America/Los_Angeles"))
+```
+
+We must be careful with time zones if we have different devices or data with time that we want to merge on timestamp.
+
+
+### Timestamps Conclusion
+Overall, this discussion stresses that handling time, including time zones and milliseconds, can be a delicate process and one that may cause conflicts especially if using different software that handles time differently and each step should likely be checked.  If not, some steps such as aggregation and merging can be wrong due to milliseconds, time zones, or truncation.
+
+
+
+## Idle Sleep Mode {#sec-idle-sleep-mode}
+Idle sleep mode is an option set on the device when it is set for recording.  The option detects when a device has not moved for a period of time and then does not record any measurement until the device moves to preserve battery.
+
+According to [ActiGraph documentation](https://actigraphcorp.my.site.com/support/s/article/Idle-Sleep-Mode-Explained), idle sleep mode works as follows:
+
+> For example, a device set to sample at 30Hz would store the last known accelerometer reading 30 times every second; the device would then wake up and check for movement.  If no movement were detected, this pattern would continue.  Otherwise the unit would exit sleep mode (i.e., "wake up") and continue sampling in normal fashion.
+
+Thus, if idle sleep mode activates on a device, there will be measurements then a gap in time, then additional measurements.  This representation of the data is accurate, but causes a number of issues for methods that presume continuous measurements.  The `imputeZeroes` argument, when `TRUE`, fills in those "missing" measurements with `0` for all 3 axes.  The output then is continuous on the sample times, but allows for users to identify "missing" values.  
+
+This behavior is consistent with ActiGraph software according to the previous document (bracket section added for clarity):
+
+> After [temporal] filtering (conversion to *.agd), this data becomes 0 counts since no movement is detected during this time period.
+
+We will discuss processing choices for handling idle sleep mode in section @sec-handling-idle-sleep. 
+
+# Processing 
+
+We refer to processing as steps in the analytic pipeline that transform the data but do not perform any analysis of the data.  These steps **can still affect** downstream analysis
+
+Note that some of these steps may be done in a different order or can be done simultaneously as they do not necessarily depend on previous steps. Some steps may not be done at all depending on the level of analysis.
+
+Overall, the goal for processing is to follow a pipeline that provides: a) reproducible estimates of physical activity, b) flexibliity to adapt to new populations,  and c) consistent measures that can be used to compare to other populations and integrated with other work.  
+
+There are a number of goals and outcomes from accelerometer data, such as gait analysis, estimation of walking speed, detection of falls or impairment, or even sleep analysis.  These are not covered in this tutorial, but the processing steps here can be used as a foundation for these analyses.
+
+## Standardized Data
+
+The standard data structure is a `data.frame` with columns for a timestamp and the three axes of data.  Most software assumes the column name for the timestamp to be named `time`. A number of other packages such as `MIMSunit` assume the time com has the column name of `HEADER_TIME_STAMP`.  
+
+### Plotting the Data
+
+As the data is high density (data has `r nrow(df)` rows!), it can be hard to visualize.   First, we can reshape the data into a long format so that all the acceleration data is in one column and a variable for axis is created, which is more conducive to plotting:
+
+```{r reshape_data_for_plot_long}
+long = df %>% 
+  tidyr::pivot_longer(cols = c(X, Y, Z), 
+                      names_to = "axis", 
+                      values_to = "acceleration")
+head(long)
+```
+
+From this, we will plot the first 5 minutes of data, separated by axis:
+
+```{r quickplot}
+(qp = long %>% 
+   filter(between(time, floor_date(time[1]), 
+                  floor_date(time[1]) + as.period(5, "minutes"))) %>% 
+   ggplot(aes(x = time, y = acceleration, colour = axis)) + 
+   geom_rect(aes(xmin = ymd_hms("2017-10-30 15:00:22"),
+                 xmax = ymd_hms("2017-10-30 15:00:37"),
+                 ymin = -Inf,
+                 ymax = Inf), fill = 'pink', alpha = 0.05) + 
+   geom_line())
+```
+
+We see that there are some records around 15:00:20 to 15:00:35 with all zeroes (shaded in pink), which we will address with respect to idle sleep mode.  
+
+
+## Handling Idle Sleep Mode Segments {#sec-handling-idle-sleep}
+In technical terms for idle sleep mode, the data is "missing" both from the device perspective and from the perspective of measuring the participant's physical activity.  The main question is how to handle it programmatically.  The options are 1) have gaps in the data, 2) fill in `NA` values for these segments, 3) fill in `0` values for these segments, or 4) last observation carried forward (LOCF).  The LOCF approach is such that if the last measurement before non-measurement on an axis was `0.952` for example, the value of `0.952` will be repeated for each sample until the device moves. This procedure is done for all axes.  
+
+The issues with each approach are:  
+
+1. gaps: most software assumes continuous/contiguous time and users cannot specify missing segments with some software as time is not even passed, but simply the measurements, 
+2. `NA` fill-in: some software assumes no missing data and some temporal filtering operations may fail or give surprising results with `NA` values.
+3. `0` fill in: somewhat inappropriate since at least gravity is being exerted on the device, can cause sharp changes in the signal that may change results, which can induce higher variance than is correct (going from value to `0`), also some interpolation will push values to the opposite sign (negative before 0, then 0, then positive interpolated)
+4. LOCF: not accurate values and harder to identify non-wear after the fact if not flagged appropriately as the device is not moving.
+
+This LOCF approach, however, is consistent with the ActiGraph documentation, has 0 variance of signal, has no jump discontinuity from previous measurements, provides continuous signal, and can be flagged.  Also, some summary measures of activity (e.g. Activity Counts, Activity Index) provide an appropriate value of $0$ to this zero variance data.
+
+From the output from `read.gt3x`, we can see 2 attributes (`features` and `missingness`) that indicate missing values:
+```{r}
+attr(df, "features")
+head(attr(df, "missingness"))
+```
+
+The `flag_idle_sleep` (default `FALSE`) argument in `read.gt3x` can also output a column of samples with an indicator of `idle` or not:
+```{r read_flagged_data}
+df_flagged = read.gt3x::read.gt3x(path = gt3x_file, 
+                                  asDataFrame = TRUE, 
+                                  imputeZeroes = TRUE,
+                                  flag_idle_sleep = TRUE)
+head(df_flagged)
+```
+
+The `SummarizedActigraphy::fix_zeros` function will fill in the data, but we can also do it using some straightforward functions in the tidyverse.  Namely, we will find records where all axes have an acceleration of $0$, replace those acceleration values for those records with `NA` and fill in the data (using LOCF) using `tidyr::fill`.
+
+
+
+```{r save_xdf}
+#| echo: false
+xdf = df
+```
+
+```{r fill_data}
+sample_rate = attr(df, "sample_rate")
+acceleration_max = as.numeric(attr(df, "acceleration_max"))
+df = dplyr::as_tibble(df)
+df = df %>% 
+  # find where all zeroes/imputed zeroes
+  mutate(all_zero = X == 0 & Y == 0 & Z == 0) %>% 
+  # replace all 0 with NA so it can be filled  
+  mutate(
+    X = ifelse(all_zero, NA_real_, X),
+    Y = ifelse(all_zero, NA_real_, Y),
+    Z = ifelse(all_zero, NA_real_, Z)
+  )
+any(df$all_zero)
+df = df %>% 
+  select(-all_zero) %>% 
+  tidyr::fill(X, Y, Z, .direction = "down")
+head(df)
+```
+
+Although not present in this data, if the first records are in idle sleep mode, they will have no "before value" to fill in and will continue to be `NA` given this code.  To handle this last case we can run:
+
+```{r na_replace}
+df = df %>% tidyr::replace_na(list(X = 0, Y = 0, Z = 0))
+```
+
+to ensure that every record has a numeric value.  Users can also drop those first records.
+
+Now we can see that the signal has been filled in for those segments that were previously all $0$.
+```{r quickplot_fixed}
+long = df %>% 
+  tidyr::pivot_longer(cols = c(X, Y, Z), 
+                      names_to = "axis", values_to = "acceleration")
+(qp_filled = long %>% 
+    filter(between(time, floor_date(time[1]), 
+                   floor_date(time[1]) + as.period(5, "minutes"))) %>% 
+    ggplot(aes(x = time, y = acceleration, colour = axis)) + 
+    geom_line())
+```
+We can compare this plot to the plot with zeroes to see how different the signal looks:
+
+```{r both_plots}
+(qp + ggtitle("With Zeroes")) / (qp_filled + ggtitle("Filled LOCF"))
+```
+
+Overall, we recommend using the LOCF procedure with ActiGraph data.
+
+## Dropping Records
+We mentioned dropping potential records from the data, but again be aware that some software **assumes** continuous signal.  Moreover, some operations such as temporal filtering can change if users shift where that operation starts (e.g. dropping records, dropping not full seconds).  For most software, we would assume the changes are not that significant depending on the change in the data, but that is not always the case.
+
+We do not recommend dropping records until after some set of processing steps (if they are used), including gravity correction, temporal filtering, and non-wear detection.
+
+
+## Gravity Correction/Calibration 
+
+Gravity correction or gravity calibration aims at correcting issues in acceleration data that may arise due to miscalibration over time or within a device. If not used, we assume that the gravity values for each person are the same if another device was used or at a different location, and that the data is well calibrated.  Alternatively, the methods or metrics used are invariant to these shifts or scaling factors.  Overall, gravity calibration should be relatively minor (at a shift and scale perspective) compared to the magnitude of the signal. If it is not, however, there may be larger concerns about the device.  Gravity calibration may harmonize data that is different due to non-biological or systemic effects that are not of interest.
+
+**Note: Not all pipelines employ this, including a number of pipelines for ActiGraph data.**
+
+We used the method employed in @gravity.  The calibration is done by estimating how much of the data is projected onto the unit sphere (radius of length 1 for all 3 axes). The assumption is that moving the accelerometer in all three directions continuously will eventually at least have just gravity operating on one of the dimensions and so the magnitude of the data should hit 1$g$ in every direction.  
+
+Specifically, the procedure below looks for when the standard deviation of the signal was <13 m$g$ (milli-$g$) in all three axes within a time window.  The 13 m$g$ cutoff was selected to be just above the empirically derived baseline (noise) standard deviation of 10 m$g$ to retain only non-movement periods. The deviation between 1$g$ and the Euclidean norm (e.g. vector magnitude) of the acceleration of the three axes is an indication of calibration error and aims to reduce that error. A window of 10-seconds was proposed as a time window.  
+
+The `GGIR::g.calibrate` function takes in a data filename and calculates the calibration parameters.  It is typically useful to input the output of `g.inspectfile` that provides metadata and a specification of the file being calibrated.  For a GT3X file, you can pass that in directly:
+
+```{r g_calibrate}
+#| cache: true
+#| dependson: specify_file
+library(GGIR)
+info = g.inspectfile(gt3x_file)
+calibration_params = g.calibrate(
+  datafile = gt3x_file, 
+  inspectfileobject = info)
+```
+
+
+The parameters denotes how many hours of data was used:
+```{r calibrate_n_hours}
+calibration_params$nhoursused
+```
+what the estimated calibration error was at the beginning and the end:
+```{r calibrate_cal_error}
+calibration_params$cal.error.start
+calibration_params$cal.error.end
+```
+and most importantly, provides the scale and shift parameters to perform the calibration:
+```{r calibrate_cal_estimates}
+calibration_params[c("scale", "offset")]
+```
+
+To calibrate the data, we can simply use the `scale` function or perform the subtraction/division ourselves:
+
+```{r df_calibrated}
+df_calibrated = df
+df_calibrated[, c("X", "Y", "Z")] = scale(
+  df[, c("X", "Y", "Z")], 
+  center = -calibration_params$offset, 
+  scale = 1/calibration_params$scale)
+```
+
+### Note on Idle Sleep Mode and Gravity Correction
+In the `GGIR` code [g.calibrate calls g.readaccfile](https://github.com/wadpac/GGIR/blob/9c7e794de27380b801451a2d889e6d4ca0677313/R/g.calibrate.R#L105) and if we look deeper, it [reads in the data using `read.gt3x::read.gt3x`](https://github.com/wadpac/GGIR/blob/9c7e794de27380b801451a2d889e6d4ca0677313/R/g.readaccfile.R#L275), **but with the default of `imputeZeroes = FALSE`**.  That means that the calibration does not use any idle sleep mode data for estimation.  
+
+Thus, if we have read in the data and performed operations and then want to perform gravity calibration, we have a few options:
+
+1) Estimate gravity correction parameters separately and then apply to data (recommended).
+2) Output the data to a format GGIR understands and have it estimate gravity correction parameters from that data.
+3) Pass the data to `agcounts::agcalibrate`.
+
+The `agcounts::agcalibrate` function aims to replicate `GGIR::g.calibrate`, but with a faster backend, and the arguments expects a `data.frame` and not a file.  We recommend not using imputed zeroes, or fixed zeroes to estimate calibration parameters as it may bias the calibration parameters. 
+
+The `SummarizedActigraphy::write_acc_csv` function creates a CSV file in the ActiGraph format so that `GGIR` will read in the data and estimate the calibration parameters.  
+
+```{r write_nozero_acc_csv}
+#| cache: true
+#| dependson: specify_file_run
+library(GGIR)
+df_nozero = read.gt3x(path = gt3x_file, 
+                      asDataFrame = TRUE)
+outfile = SummarizedActigraphy::write_acc_csv(df_nozero, tempfile(fileext = ".csv"))
+info = g.inspectfile(outfile)
+csv_calibration_params = g.calibrate(
+  datafile = outfile,
+  inspectfileobject = info)
+```
+We see that these different operations gives the same results for calibration:
+
+```{r compare_calibration_params}
+all.equal(calibration_params[c("scale", "offset")], 
+          csv_calibration_params[c("scale", "offset")])
+```
+
+Thus, we **can** run calibration on our zero-imputed and filled in data, by writing this CSV out and then running `g.calibrate`.  We do not evaluate the next 2 sections of code:
+
+```{r write_acc_csv}
+#| eval: false
+outfile = SummarizedActigraphy::write_acc_csv(df, tempfile(fileext = ".csv"))
+info = g.inspectfile(outfile)
+imputed_calibration_params = g.calibrate(
+  datafile = outfile, 
+  inspectfileobject = info)
+```
+
+This file is similar to that is exported from the ActiGraph software.  Note, however, that GGIR indicates:
+
+> Note for Actigraph users: If you want to work with .csv exports via the commercial ActiLife software then note that you have the option to export data with timestamps. Please do not do this as this causes memory issues for GGIR. To cope with the absence of timestamps GGIR will calculate timestamps from the sample frequency, the start time and start date as presented in the file header.
+
+Thus, the time is "complete" in that idle sleep mode samples **are included** in this data set and the output from calibration using a GT3X file and ActiGraph CSV file may be different.
+
+Alternatively, you can use `agcounts::agcalibrate`, but ensuring we attach the `sample_rate` so that the function does not try to estimate the sample rate, but have it passed (it is not an argument):
+
+```{r agcalibrate}
+#| eval: false
+# so it doesn't have to guess
+attr(df, "sample_rate") = sample_rate
+imputed_agcalibration_params = agcounts::agcalibrate(df)
+```
+
+We have added this options in case researchers want to see how each options affects the downstream results, but we do not necessarily recommend using the idle sleep mode LOCF-imputed data for gravity calibration as it will be heavily influenced by the idle-sleep mode sections, which can be very long if the device was not worn.
+
+
+## Non-wear Detection
+Non-wear detection tries to identify segments of the data that are invalid due to non-wear. Even when someone is very still, micro-movements that typically happen cause acceleration in the order that the accelerometer can detect. 
+
+There are a number of methods available for non-wear detection. Generally, they look at a variance or standard deviation criteria for the signal and flag non-wear as segments that are below the threshold. They then will potentially merge "islands" of non-wear into a larger segment, depending on flexibility or how much "wear" time is detected in between.  There are a number of additional methods that have been proposed, including deep learning methods. Some of them operate on the raw data, but the majority work with minute level data and are used to classify whether minutes should be flagged as wear or non-wear. 
+
+Two of the most popular methods [@CHOI2011; @troiano2014evolution] are based on ActiGraph activity counts and have a specified window for finding zero counts with some flexibility of having spikes minutes of wear.  These methods will be referred to as the Choi [@CHOI2011] and Troiano [@troiano2014evolution] methods.  
+
+From @knaier2019validation, they describe:
+
+>  "Troiano" defines non-wear time as intervals of at least 60 consecutive minutes of zero activity counts, allowing for up to two consecutive minutes of counts between 1 and 100 counts. The algorithm "Choi" defines non-wear times as periods of consecutive 0-counts of a certain duration. This duration is defined as “minimum length of non-wear times”. The default setting by the manufacturer is 90 min. 
+
+These methods have been implemented in the `actigraph.sleepr` package.  But first we will create activity counts.
+
+## Creating Activity Counts {#sec-create-ac-nonwear}
+We will detail more about activity counts (AC), and other potential measurements of activity in the next section, but we need to show how to calculate these activity counts in order to get non-wear flags.  Previously, activity counts were a proprietary output of the ActiLife software, but the ActiGraph team published a paper in 2022 [@neishabouri2022quantification] that describes how they are calculated and released software to calculate them (https://github.com/actigraph/agcounts).  The `agcounts`, `activityCounts`, and [`agcounter`](https://github.com/muschellij2/agcounter) packages have functions that can convert the raw data into minute-level counts for non-wear.  
+
+This software gives a per-axis AC measure.  Axis-level AC can be aggregated from higher resolutions to lower: if you calculate AC at 15 second intervals, then the 60 second/minute level AC is the sum of the 4 values measured at 15 seconds.  Once AC is measured at the desired timing, the AC units from X/Y/Z are combined into a vector magnitude:
+
+$$
+VM = \sqrt{(X^2 + Y^2 + Z^2)}
+$$
+We can calculate the counts for 15-seconds using the code below:
+```{r run_ac}
+#| cache: true
+ac15 = df %>% 
+  agcounts::calculate_counts(epoch = 15L, tz = lubridate::tz(df$time))
+ac15 %>% head()
+```
+Note, pass in the timezone of the data to be sure `calculate_counts` works appropriately.  We see the time and each axis-level activity counts and the Vector Magnitude output.  Here we calculate counts for 60-second epochs too:
+
+```{r run_ac60}
+#| cache: true
+ac60 = df %>% 
+  agcounts::calculate_counts(epoch = 60L, tz = lubridate::tz(df$time))
+head(ac60)
+```
+
+Directly aggregating the 15-second data to the 60-second data shows that they are the same (after converting to the same class):
+
+```{r ac_compare}
+ac_compare = ac15 %>% 
+  mutate(time = floor_date(time, "60 seconds")) %>% 
+  group_by(time) %>% 
+  summarise(across(c(Axis1, Axis2, Axis3), sum), .groups = "drop")
+# they are the same !
+all.equal(ac_compare[c("time", paste0("Axis", 1:3))],
+          tibble::as_tibble(ac60[c("time", paste0("Axis", 1:3))]))
+```
+In practice, there may be very minor differences in aggregation if there are not a full set of samples for the epoch, such as if the data is started at a non-rounded second (e.g. 12:02:12.125), the data was subset, or resampled to a different temporal resolution (discussed below).
+
+For future comparison, we will rename the column for activity counts as AC: 
+
+```{r rename_ac60}
+ac60 = ac60 %>% 
+  select(time, AC = Vector.Magnitude, everything())
+```
+
+
+### Estimating Non-wear Minutes
+From this minute-level activity counts data, we can run the Choi algorithm.  First, we must rename the `time` column to `timestamp` and replace the columns with their lowercase counterpart:
+
+
+```{r choi_data}
+data = ac60 %>%
+  rename(timestamp = time,
+         axis1 = Axis1,
+         axis2 = Axis2,
+         axis3 = Axis3)
+```
+
+
+there is a minor [issue with how times are compared in `actigraph.sleepr`](https://github.com/dipetkov/actigraph.sleepr/issues/12) that is related to how how `dplyr::first` calls `vctrs::vec_slice`.  The check fails for missing epochs:
+
+```{r choi_check_missing}
+actigraph.sleepr::has_missing_epochs(data)
+```
+
+which is employed in `apply_choi` and causes an error:
+
+```{r choi_check}
+#| error: true
+choi_nonwear = actigraph.sleepr::apply_choi(data)
+```
+
+In practice, you may have to use a workaround to cast the timestamp as a `double` so the checks pass for no gaps:
+```{r choi_check2}
+mode(data$timestamp) = "double"
+actigraph.sleepr::has_missing_epochs(data)
+```
+
+then you can run the Choi/Troiano algorithms:
+
+```{r choi}
+choi_nonwear = actigraph.sleepr::apply_choi(data, use_magnitude = TRUE)
+head(choi_nonwear)
+```
+
+We see that the output is a `data.frame` of start and stop times of non-wear.  We can expand this to a temporal data to merge with the minute-level counts with a column indicator of wear:
+
+```{r}
+if (nrow(choi_nonwear) == 0) {
+  data$choi_wear = TRUE
+} else {
+  choi_df = purrr::map2_df(
+    choi_nonwear$period_start, choi_nonwear$period_end,
+    function(from, to) {
+      data.frame(timestamp = seq(from, to, by = 60L),
+                 choi_wear = FALSE)
+    })
+  data = left_join(data, choi_df) %>%
+    tidyr::replace_na(list(choi_wear = TRUE))
+}
+head(data)
+data %>% 
+  count(choi_wear)
+```
+
+```{r choi_plot_data_transform}
+plot_data = data %>% 
+  rename(time = timestamp) %>% 
+  mutate(date = lubridate::as_date(time),
+         hourtime = hms::as_hms(time))
+```
+
+Here we can plot the activity count data with the estimated wear/non-wear as colored in the background:
+```{r choi_plot}
+#| fig-height: 10
+#| fig-width: 12
+plot_data %>% 
+  ggplot(aes(x = time, y = AC)) + 
+  geom_segment(
+    aes(x = time, xend = time,
+        y = -Inf, yend = Inf, color = choi_wear), alpha = 0.25) + 
+  geom_line() 
+```
+
+This may be easier to see by day, so we can facet the data:
+
+```{r choi_plot_day}
+#| fig-height: 16
+#| fig-width: 8
+plot_data %>% 
+  ggplot(aes(x = hourtime, y = AC)) + 
+  geom_segment(
+    aes(x = hourtime, xend = hourtime,
+        y = -Inf, yend = Inf, color = choi_wear), alpha = 0.25) + 
+  geom_line() +
+  facet_wrap(~ date, ncol = 1)
+```
+
+Overall, this looks like relatively clean data, but there are some segments (e.g. 2017-11-01 at 20:00) that may be misclassified.
+
+Alternatively, the `wearingMarking` function from `PhysicalActivity` can also calculate the Choi algorithm: 
+```{r wearingMarking}
+#| cache: true
+choi = PhysicalActivity::wearingMarking(
+  ac60,
+  frame = 90L,
+  perMinuteCts = 1L,
+  TS = "time",
+  cts = "AC"
+)
+head(choi)
+choi %>% count(wearing)
+```
+Unfortunately, this does not agree with the method from `actigraph.sleepr`.
+
+Looking at the data, we see the there is a segment `2017-11-01` that is classified as wear compared to the previous plot:
+
+```{r choi_wearmarking_plot_day}
+#| fig-height: 16
+#| fig-width: 8
+choi %>% 
+  mutate(date = lubridate::as_date(time),
+         hourtime = hms::as_hms(time)) %>% 
+  ggplot(aes(x = hourtime, y = AC)) + 
+  geom_segment(
+    aes(x = hourtime, xend = hourtime,
+        y = -Inf, yend = Inf, color = wearing), alpha = 0.25) + 
+  geom_line() +
+  facet_wrap(~ date, ncol = 1)
+```
+
+
+The [@troiano2014evolution] method has also been employed using `actigraph.sleepr::apply_troiano`, but the Choi algorithm has been recommended compared to that in some work [CITE DIARY].  
+
+Other algorithms available for non-wear detection: `accelerometry::weartime`, [`swan::swan` function](https://github.com/muschellij2/swan), and a number of functions from the [`weartime` package](https://github.com/jhuwit/weartime), though some functions may only be appropriate for hip-worn data.  
+
+
+## Resampling Data
+Resampling data is a common operation in time series data analysis.  In the context of accelerometer data, resampling can be used to change the temporal resolution of the data.  For example, users may have some data 80 samples per second (Hz), other data at 50Hz, and want to harmonize it at 30Hz.  Note, resampling the data will likely change preprocessing steps, so it's important to consider when to perform the resampling or for what steps.  Moreover, summary measures, including activity counts, may be influenced by the sampling rate. 
+
+
+There are a number of ways to resample.  In the [`walking`](https://github.com/muschellij2/walking) package, the `resample_accel_data`  and `resample_accel_data_to_time` functions can resample the data.  For example, the `resample_accel_data` function takes in a data set with a time column and 3 axes and resamples the data to a new sample rate.  This resampling is done by (default) using a linear interpolation.  The other methods are those available by the `splines` package.  The process is: 1) turn time into a numeric vector, 2) use either `approx` or a `splines` function to approximate the function of `time` and the acceleration from one axis, 3) create a time vector with the appropriate spacing of the sample rate given, and 4) "predicting"
+
+
+```{r resample_15}
+#| cache: true
+df15 = walking::resample_accel_data(df, sample_rate = 15L)
+head(df15)
+```
+
+The `resample_accel_data_to_time` function takes in a data set and a time vector and resamples the data to the new time vector.  The `resample_accel_data` function is more common, but the `resample_accel_data_to_time` function is useful if you have a specific time vector you want to resample to.
+
+## Temporal Filtering
+
+A number of signal processing methods apply temporal filtering to the data to remove unwanted or non-biologic noise or potential artifacts. No perfect filter exists for all analyses and different filters may be used on the same data to estimate different parameters.  Moreover, temporal filtering may not be reported or reported with sufficient information for replication. 
+
+Much of the guidance for temporal filtering can be derived by in-person studies that require a participant to perform a number of activities.  From this, we can look at frequencies that are represented in the data, likely by frequency analysis or fast Fourier transforms (FFT).  Most statistical software has temporal filtering routines and FFT functionality.
+
+From these frequency distributions, many assume the majority of human movement is at a frequency lower than 5Hz [@ancoli2003role].  When creating Activity Counts, ActiGraph software filter band-limits the accelerometer to the frequency range of 0.25 to 2.5 Hz [@ActiGraph_Data_Conversion].  ActiGraph has also implemented an Low Frequency Extension (LFE) filter designed to detect lower amplitude movements [@ActiGraph_LFE].  Application of the LFE filter can reduce underestimation of steps and the measures derived from LFE-filtered data have been shown to be accurate for high speeds [@feito2017effect, @feito2015evaluation].  GGIR uses a filter band from 0.2 to 15Hz by default when reporting filtered data results.  
+
+Though some applications have seen agreement with ground truth metrics after using a specific filter, choosing temporal filters is complicated due to fact that the body area for placement of the accelerometer can be greatly different with respect to movement frequency, such as the hip/ankle versus the wrist.  Overall, however, a range of frequencies 0.2 to 5Hz seems relatively inclusive for those that have been presented that captures human movement while reducing unwanted fluctuations.  We do not present a hard recommendation, but will show how to perform some filtering with our data.  Note, specific applications such as running may require a much different filter.
+
+The [`signal`](https://cran.r-project.org/package=signal) [@ligges2015package], [`gsignal`](https://github.com/gjmvanboxtel/gsignal) [@gsignal], `splines` packages and other built-in functions can perform temporal filtering. The [`impactr`](https://github.com/verasls/impactr) [@impactr] package also has a `impactr::filter_acc` package that is built for accelerometer data.  We will show a simple band pass filtering for the data, which requires knowing the sampling rate (and therefore the Nyquist frequency) and using a 7-th order Butterworth filter:
+
+```{r}
+x = df$X
+nyquist = sample_rate / 2
+cutoffs = c(0.25, 5)
+w <- cutoffs/nyquist
+order = 7L
+ba <- signal::butter(n = order, W = w, type = "pass")
+xfilt = signal::filtfilt(ba, x)
+```
+
+Additionally, researchers should consider whether to filter the data based on the original signal from each axis or the vector magnitude.
+
+
+# Summary Measures
+
+Note that throughout we will use the original raw data in many cases instead of the gravity-calibrated data.  We believe that gravity-calibrated could and likely should be used in these instances.  
+
+## Monitor-Independent Movement Summary (MIMS) Units {#sec-mims}
+@mims introduced the Monitor-Independent Movement Summary (MIMS) unit that was to be an "open-source, universal acceleration summary metric that accounts for discrepancies in raw data among research and consumer devices".  The release coincided with the release of the National Health and Nutrition Examination Survey (NHANES) activity data for waves 2011-2014, which was released in MIMS units. The paper also released the [`MIMSunit`](https://github.com/mhealthgroup/mimsunit) package that can calculate MIMS unit data.  The MIMS unit takes in axis-level data, performs interpolation of the signal to 100Hz, extrapolates signal for regions that have hit the maximum/minimum acceleration units for the device, band-pass filters from 0.2 to 5Hz, and then takes the absolute value of the area under the curve (AUC) using a trapezoidal rule, and truncates low signal values to $0$.
+
+@karas2022comparison found a correlation of $\geq 0.97$ between AC and MIMS units.  This work was prior to the release of the calculation of the AC from @neishabouri2022quantification, which performs resampling to 30Hz, runs a band-pass filter on the resampled data (7th order IIR filter), takes the absolute value of the signal, rescales the signal, downsamples the data to 10Hz, performs a low-pass filter, and then sums up the values (e.g. AUC). Thus, MIMS and AC are likely going to be highly correlated as they estimate activity in similar ways. 
+
+One additional argument MIMS requires is the dynamic range from a device (e.g max/min acceleration).  This value was extracted from an attribute after reading in the data, but it may be external data that needs to be stored separate from the device, such as if the data has been converted to CSVs.
+
+You may need to rename the `time` column to `HEADER_TIME_STAMP` for MIMS units depending on the version of the package:
+
+```{r calculate_mims}
+#| cache: true
+dynamic_range = c(-acceleration_max, acceleration_max)
+mims = df %>% 
+  rename(HEADER_TIME_STAMP = time) %>% 
+  MIMSunit::mims_unit(dynamic_range = dynamic_range, epoch = "1 min")
+```
+
+Note, as this resamples data to 100Hz, this may have a significantly larger memory footprint for processing than the raw data.  We can see the output from the MIMS processing:
+
+```{r mims_show}
+head(mims)
+```
+
+### MIMS: Comparison to Calibrated Data
+We can run MIMS on the calibrated data:
+
+```{r calculate_mims_calibrated}
+#| cache: true
+mims_calibrated = df_calibrated %>% 
+  rename(HEADER_TIME_STAMP = time) %>% 
+  MIMSunit::mims_unit(dynamic_range = dynamic_range, epoch = "1 min")
+```
+
+We rename the columns of `mims` for consistency:
+
+```{r mims_rename}
+mims = mims %>% 
+  rename(time = HEADER_TIME_STAMP,
+         MIMS = MIMS_UNIT)
+mims_calibrated = mims_calibrated %>% 
+  rename(time = HEADER_TIME_STAMP,
+         calibrated_MIMS = MIMS_UNIT)
+```
+
+We see that calibration provides a result almost perfectly correlated without calibration:
+
+```{r cor_mims}
+cor(mims_calibrated$calibrated_MIMS, mims$MIMS)
+```
+And the absolute value of the data is almost identical:
+```{r mse_mims}
+mean((mims_calibrated$calibrated_MIMS - mims$MIMS)^2)
+```
+
+## AUC
+
+The `SummarizedActigraphy::calculate_auc` function can calculate a quick AUC that is similar to MIMS without interpolation, extrapolation, or filtering:
+```{r calculate_auc}
+#| cache: true
+auc = SummarizedActigraphy::calculate_auc(df, 
+                                          sample_rate = sample_rate,
+                                          verbose = FALSE, 
+                                          allow_truncation = TRUE)
+auc = auc %>% 
+  rename(time = any_of("HEADER_TIME_STAMP")) %>% 
+  select(time, AUC)
+```
+
+Here we can see these AUC values:
+
+```{r auc_show}
+head(auc)
+```
+
+and correlate them with MIMS Units:
+
+```{r mims_compare_auc}
+cor(auc$AUC, mims$MIMS)
+```
+
+!!! NOTE WHY LOW CORRELATION
+
+### AUC: Comparison to Calibrated Data
+
+For completeness, we will also run AUC on the calibrated data:
+```{r calculate_auc_calibrated}
+#| cache: true
+auc_calibrated = SummarizedActigraphy::calculate_auc(df_calibrated, 
+                                                     sample_rate = sample_rate,
+                                                     verbose = FALSE, 
+                                                     allow_truncation = TRUE)
+auc_calibrated = auc_calibrated %>% 
+  rename(time = any_of("HEADER_TIME_STAMP")) %>% 
+  select(time, calibrated_AUC = AUC)
+```
+
+We see a high correlation with the AUC with and without calibration:
+```{r cor_aUc}
+cor(auc_calibrated$calibrated_AUC, auc$AUC)
+```
+
+But the absolute value of the data is different, which is expected because AUC is not shift or scale invariant:
+
+```{r mse_auc}
+mean((auc_calibrated$calibrated_AUC - auc$AUC)^2)
+```
+
+Overall, the AUC is not commonly used in the literature, but it is a quick and easy measure to calculate.
+
+
+
+## Activity Counts (AC)
+
+As we have seen in @sec-create-ac-nonwear, we can calculate AC via the `agcounts::calculate_counts` function:
+
+```{r run_ac60_again}
+#| cache: true
+ac60 = df %>% 
+  agcounts::calculate_counts(epoch = 60L, tz = lubridate::tz(df$time)) %>% 
+  select(time, AC = Vector.Magnitude, everything())
+```
+
+
+The `actilifecounts::get_counts` function also can calculate AC. In this function, users pass in the sample rate explicitly, but the timestamp should be removed:
+
+```{r run_ac60_actilifecounts}
+#| cache: true
+counts60 = df %>% 
+  select(X, Y, Z) %>% 
+  actilifecounts::get_counts(sf = sample_rate, epoch = 60L)
+```
+
+We see the same estimated counts are the same, with the `Axis2` corresponding to `X` in the output.  The vector magnitude (AC) is also typically rounded:
+
+```{r compare_counts}
+head(ac60)
+head(counts60)
+```
+
+
+
+### AC: Comparison to Calibrated Data
+
+
+For comparison and consistency, we will also calculate the counts using the calibrated data:
+
+```{r run_ac60_calibrated}
+#| cache: true
+ac60_calibrated = df_calibrated %>% 
+  agcounts::calculate_counts(epoch = 60L, tz = lubridate::tz(df$time)) %>% 
+  select(time, calibrated_AC = Vector.Magnitude)
+```
+
+
+We see that calibration provides a result almost perfectly correlated without calibration:
+
+```{r cor_ac}
+cor(ac60_calibrated$calibrated_AC, ac60$AC)
+```
+
+But the absolute value of the data is different:
+
+```{r mse_ac}
+mean((ac60_calibrated$calibrated_AC - ac60$AC)^2)
+```
+
+We can look at the mean absolute percent difference for values of AC that are greater than $0$:
+```{r mape_ac}
+mean(abs(
+  (ac60_calibrated$calibrated_AC - ac60$AC)/
+    ac60$AC)[ac60$AC > 0]
+)*100
+```
+and see that the practical difference is quite low (< 1%). 
+
+We can plot the AC versus the AC from the gravity calibrated to see that they are very close overall:
+
+```{r ac_plot}
+#| message: false
+#| warning: false
+(ac_plot = ac60 %>% 
+    full_join(ac60_calibrated, by = join_by(time)) %>% 
+    ggplot(aes(x = AC, y = calibrated_AC)) + 
+    geom_point() + 
+    geom_smooth(se = FALSE, colour = "blue") +
+    geom_abline(slope = 1, intercept = 0, color = "black"))
+```
+
+where we see a strong agreement on the X = Y line for equality and small deviations.  If we zoom into only values $\leq 2000$ we can see that this is true for that range as well:
+
+```{r ac_plot_zoom}
+#| message: false
+#| warning: false
+ac_plot + xlim(c(0, 2000)) + ylim(c(0, 2000))
+```
+
+We can take a histogram of AC minus the gravity-calibrated estimate of AC shows that calibration almost always (for this participant) results in lower AC values:
+
+```{r ac_diff_hist}
+(ac_diff_plot = ac60 %>% 
+   full_join(ac60_calibrated, by = join_by(time)) %>% 
+   mutate(AC_diff = AC - calibrated_AC) %>% 
+   ggplot(aes(x = AC_diff)) + 
+   geom_histogram(bins = 30) + 
+   ylab("AC - Calibrated AC (> 0 means AC higher)")
+)
+```
+
+This difference may be relevant depending on how different the calibration is from participant to participant.
+
+Note, many studies almost surely did not perform gravity calibration as it was not a step in the ActiLife software and the AC calculation was not open source until 2022.  Thus, as AC is now open source, we can try different preprocessing before calculation, which was not available unless users created ActiLife-specific data to import into ActiLife (e.g. ActiGraph-formatted CSVs). 
+
+
+
+## Euclidean Norm Minus One (ENMO)
+The acceleration for each axis is in International System of Units (SI units) already (gravity units).  We can summarize the 3 axes using the Euclidean norm $\|x\|^2$ similar to vector magnitude, but we also subtract 1 to remove the effect of gravity, resulting in the Euclidean Norm Minus One (ENMO):
+
+$$
+\text{ENMO} = \sqrt{(X^2 + Y^2 + Z^2)} - 1
+$$
+Researchers also truncate this value at $0$ so that it is only positive, which we will refer to as $\text{ENMO}_{t}$ for truncated:
+
+$$
+\text{ENMO}_t = \text{max}(\text{ENMO}, 0)
+$$
+Here we can calculate ENMO and ENMO$_t$ from the data:
+
+```{r enmo}
+#| cache: true
+enmo = df %>% 
+  ungroup() %>% 
+  mutate(
+    r = sqrt(X^2 + Y^2 + Z^2),
+    ENMO = r - 1,
+    ENMO_t = pmax(ENMO, 0),
+    time = lubridate::floor_date(time, "1 minute")
+  ) %>% 
+  group_by(time) %>% 
+  dplyr::summarise(
+    ENMO = mean(ENMO),
+    ENMO_t = mean(ENMO_t),
+    .groups = "drop"
+  )
+```
+
+
+Those that use ENMO have recommended heavily the use of ENMO post gravity correction/calibration, so we can calculate the data on the calibrated data as well:
+
+```{r enmo_calibrated}
+#| cache: true
+enmo_calibrated = df_calibrated %>% 
+  ungroup() %>% 
+  mutate(
+    r = sqrt(X^2 + Y^2 + Z^2),
+    ENMO = r - 1,
+    ENMO_t = pmax(ENMO, 0),
+    time = lubridate::floor_date(time, "1 minute")
+  ) %>% 
+  group_by(time) %>% 
+  dplyr::summarise(
+    calibrated_ENMO = mean(ENMO),
+    calibrated_ENMO_t = mean(ENMO_t),
+    .groups = "drop"
+  )
+```
+
+### ENMO: Comparison to Calibrated Data
+
+In practice, one should almost always do calibration for ENMO as a primary summary measure.
+
+We see that calibration provides a result highly correlated without calibration:
+
+```{r cor_enmo}
+cor(enmo_calibrated$calibrated_ENMO, enmo$ENMO)
+cor(enmo_calibrated$calibrated_ENMO_t, enmo$ENMO_t)
+```
+But the absolute value of the data is different
+
+```{r mse_enmo}
+mean((enmo_calibrated$calibrated_ENMO - enmo$ENMO)^2)
+mean((enmo_calibrated$calibrated_ENMO_t - enmo$ENMO_t)^2)
+```
+
+
+
+We can compare the gravity calibrated ENMO$_t$ versus 
+
+```{r enmo_plot}
+#| message: false
+#| warning: false
+(enmo_plot = enmo %>% 
+    full_join(enmo_calibrated, by = join_by(time)) %>% 
+    ggplot(aes(x = ENMO_t, y = calibrated_ENMO_t)) + 
+    geom_point() + 
+    geom_smooth(se = FALSE, colour = "blue") +
+    geom_abline(slope = 1, intercept = 0, color = "black"))
+```
+
+where we see a strong agreement on the X = Y line, but some deviations, which may be small in absolute value but higher percentage-wise due to how small the values are.  Moreover, we see different values in the lower end of the data (e.g. $\leq 0.1$):
+
+```{r enmo_plot_zoom}
+#| message: false
+#| warning: false
+enmo_plot + xlim(c(0, 0.1)) + ylim(c(0, 0.1))
+```
+
+
+## Activity Index (AI)
+@bai2016activity introduced the Activity Index (AI), an open-source metric that operates on raw data, has units in SI units ($g$ or milli-$g$) and has more sensitive ROC curves for moderate and vigorous physical activities compared to AC and was shown to be more sensitive to sedentary and light activities than ENMO.
+
+For a given window $H$, AI is calculated for a given participant via:
+
+$$
+AI(t; H) = \sqrt{ \max \left( \frac{1}{3} \left\{\sum\limits_{m=1}^3 \left( \sigma_{m}^2(t; H) - \bar{\sigma}^2_{i} \right) \right\}, 0 \right) }
+$$
+
+where $\bar{\sigma}^2_{i}$ is denoted by systemic noise variance and $\sigma_{m}^2(t; H)$ is the variance of the signal for axis $m \in \{X, Y, Z\}$ within that window.  The window is typically set to 1-second.  As the systemic noise estimate typically requires a stationary period from the device, which may have not been in the protocol, we typically calculate this using what we refer to as $AI_{0}$:
+
+$$
+\text{AI}(t; H)_0 = \sqrt{ \frac{1}{3} \sum\limits_{m=1}^3 \sigma_{m}^2(t; H)  }
+$$
+
+which is the square root of the average variance of the 3 axes, and provides an average standard deviation. @bai2016activity indicated that the window to calculate AI was 1 second and "any aggregated AI was obtained by summing up all the adjacent 1-second AIs within that period".  Thus, to calculate AI at a minute level, we would calculate it at a second level and then add the 60 $\text{AI}_0$ values together.
+
+
+This $AI_0$ value is fast and interpretable and is robust to potential shifts and scales in the data, so it should provide the same values with and without gravity correction.  The [`ActivityIndex`](https://github.com/javybai/ActivityIndex) package calculates this value if we specify `sigma0 = 0` in the `computeActivityIndex` function:
+
+```{r ActivityIndex}
+#| cache: true
+ai = df %>% 
+  rename(Index = time) %>% 
+  ActivityIndex::computeActivityIndex(sigma0 = 0, 
+                                      epoch = 60,
+                                      hertz = sample_rate) %>% 
+  tibble::as_tibble() 
+head(ai)
+```
+
+We can rename the `RecordNo` column to `time` for consistency:
+```{r AI_rename}
+#| cache: true
+ai = ai %>% 
+  rename(time = RecordNo)
+```
+
+
+
+Alternatively, the `SummarizedActigraphy::calculate_ai` package will calculate this as well:
+
+```{r ActivityIndex_SummarizedActigraphy}
+#| cache: true
+ai0 = SummarizedActigraphy::calculate_ai(df, unit = "1 min") %>% 
+  rename(time = HEADER_TIME_STAMP)
+```
+
+Here we see we are getting the same values back from the procedures, but with different column names and a different data format (that we have harmonized):
+
+```{r}
+head(ai)
+head(ai0)
+```
+
+### AI: Comparison to Calibrated Data
+
+We will calculate the AI on the calibrated data:
+
+```{r ActivityIndex_calibrated}
+#| cache: true
+ai_calibrated = df_calibrated %>% 
+  rename(Index = time) %>% 
+  ActivityIndex::computeActivityIndex(sigma0 = 0, 
+                                      epoch = 60,
+                                      hertz = sample_rate) %>% 
+  tibble::as_tibble() %>% 
+  rename(time = RecordNo,
+         calibrated_AI = AI)
+head(ai_calibrated)
+```
+
+
+We see that calibration provides essentially the same result as we expected due to the nature of AI (scale and shift invariance):
+```{r cor_ai}
+cor(ai$AI, ai_calibrated$calibrated_AI)
+```
+
+and also very close in absolute value of the AI:
+```{r mse_ai}
+mean((ai_calibrated$calibrated_AI - ai$AI)^2)
+```
+
+and some differences can exist due to floating point arithmetic, so these might have differences up to some tolerance (e.g. 0.001), especially as these values are aggregated over 60-second windows.
+
+
+
+
+## Mean Amplitude Deviation (MAD)
+@mad recommended the Mean Amplitude Deviation (MAD) as a measure that was an open-source, in SI units, and had good discriminating power for separating activity levels from each other.  The MAD is calculated as the mean of the absolute difference between the acceleration and the mean acceleration for a given epoch.
+
+For a given epoch of length $m$, and where $\text{VM}$ represents the vector magnitude of the signal, the calculation of MAD is:
+$$
+\text{MAD} = \frac{1}{m} \sum_{i=1}^{m} \left|\text{VM}_i- \overline{\text{VM}}_m \right|
+$$
+For a given epoch, @mad recommended taking the mean value of MAD for summarization and recommended 5-second epochs.
+
+```{r calculate_MAD}
+#| cache: true
+mad5 = df %>% 
+  mutate(
+    r = sqrt(X^2 + Y^2 + Z^2),
+    time = lubridate::floor_date(time, "5 seconds")
+  ) %>% 
+  group_by(time) %>% 
+  dplyr::summarise(
+    MAD = mean(abs(r - mean(r, na.rm = TRUE))),
+    .groups = "drop"
+  )
+mad = mad5 %>% 
+  mutate(
+    time = lubridate::floor_date(time, "1 minute")
+  ) %>% 
+  group_by(time) %>% 
+  dplyr::summarise(
+    MAD = mean(MAD),
+    .groups = "drop"
+  )
+```
+
+
+Note, that if we sum the MAD 5-second values it will have a 100% correlation with the mean, but the values will be different, which is important for thresholding and reporting depending on how other groups aggregate MAD. 
+
+We can also use 60-seconds as the epoch and estimate MAD based on all the samples within a 60-second window (which we name `mad60`):
+
+```{r calculate_MAD60}
+mad60 = df %>% 
+  mutate(
+    r = sqrt(X^2 + Y^2 + Z^2),
+    time = lubridate::floor_date(time, "1 minute")
+  ) %>% 
+  group_by(time) %>% 
+  dplyr::summarise(
+    MAD60 = mean(abs(r - mean(r, na.rm = TRUE)))
+  )
+```
+
+Comparing the 60-second epoch versus the taking 5-second epochs and then averaging we see a very high correlation:
+
+```{r mad_corr}
+cor(mad$MAD, mad60$MAD60)
+```
+
+Thus, for most regression problems, calculating MAD in this way should give pretty similar results.  
+
+### MAD: Comparison to Calibrated Data
+
+We will also calculate MAD using the gravity calibrated data:
+```{r calculate_MAD_calibrated}
+#| cache: true
+mad_calibrated = df_calibrated %>% 
+  mutate(
+    r = sqrt(X^2 + Y^2 + Z^2),
+    time = lubridate::floor_date(time, "5 seconds")
+  ) %>% 
+  group_by(time) %>% 
+  dplyr::summarise(
+    MAD = mean(abs(r - mean(r, na.rm = TRUE))),
+    .groups = "drop"
+  ) %>% 
+  mutate(
+    time = lubridate::floor_date(time, "1 minute")
+  ) %>% 
+  group_by(time) %>% 
+  dplyr::summarise(
+    calibrated_MAD = mean(MAD),
+    .groups = "drop"
+  )
+```
+
+We see that calibration provides essentially the same result as we expected due to the nature of MAD (scale and shift invariance):
+```{r cor_mad}
+cor(mad$MAD, mad_calibrated$calibrated_MAD)
+```
+
+
+and also very close in absolute value of the MAD:
+```{r mse_mad}
+mean((mad_calibrated$calibrated_MAD - mad$MAD)^2)
+```
+
+```{r sub_mad}
+#| include: false
+mad = mad %>% select(time, MAD)
+mad_calibrated = mad_calibrated %>% select(time, calibrated_MAD)
+```
+
+
+## Comparing Summary Measures {#sec-compare-measures}
+
+We can join all the measures into one `data.frame` to perform some comparisons.  We have dropped AUC as it is not commonly used.  Note that these comparisons are only for one subject but the correlations can give insights into the differences between the measures:
+
+```{r measure_compare}
+#| cache: true
+measures = ac60 %>% 
+  tibble::as_tibble() %>% 
+  select(time, AC)
+measures = measures %>% 
+  full_join(enmo, by = join_by(time)) %>% 
+  full_join(enmo_calibrated, by = join_by(time)) 
+
+# these have almost perfect correlation with calibrated counterpart
+measures = measures %>% 
+  full_join(mims, by = join_by(time)) 
+measures = measures %>% 
+  full_join(ai, by = join_by(time))
+measures = measures %>% 
+  full_join(mad, by = join_by(time))
+```
+
+Here we can calculate the correlation for all measures versus the others:
+```{r measure_compare_corr}
+#| message: false
+corr_data = measures %>% 
+  select(-time) %>% 
+  rename_with(.fn = function(x) sub("calibrated_", "c_", x)) %>% 
+  corrr::correlate() 
+corr_data
+```
+
+We see that AI and MIMS have correlations of $0.98$ and $0.99$ with AC:
+
+```{r measures_cor_plot}
+corr_data %>% 
+  corrr::rplot() + 
+  scale_x_discrete(guide = guide_axis(n.dodge = 2))
+```
+
+We see that some of the measures are highly correlated, which is expected as they are all measures of activity.  The correlation between the calibrated and non-calibrated measures is also very high, which is expected as the calibration is a linear transformation of the data.  
+
+Thus, some measures may be very similar to others, which is important if using different measures as covariates in regressions or using them as features.  Thresholds have been derived in a number of studies and it is important to understand which measure was used and how it was calculated.  @karas2022comparison created a mapping of some of these measures to others so that similar thresholds can be used in practice.  Regardless of what is being estimated or measures, researchers should use the same calculation within a study.  Moreover, the calibration of the data can be important for some measures, but for others, it may not be as important.  The correlation between the measures can give some insight into the relationships between the measures and how they may be used in practice.
+
+
+## Step Counts
+
+Though total physical activity and activity levels are commonly of interest, many researchers have found that translating the data into step counts provide an understandable metric for many patients and clinicians.  The [`stepcount`](https://github.com/OxWearables/stepcount) Python module [@stepcount] provides two machine learning algorithms that estimate steps from sub-second raw accelerometry data and was trained on wrist-worn data.  The self-supervised learning (SSL) method has shown to have good fidelity with various ground truth steps (e.g. pedometers or video recording counts).  The random forest (RF) method also has high performance, but the SSL method is generally preferred.  As these are estimated counts and the definition of a step is still debated, it may be useful to call these "step" counts highlighting these are estimates what is vaguely defined as a step.
+
+The [`stepcount`](https://github.com/jhuwit/stepcount) R package wraps this Python code. The package also has functions for creating a Conda environment for these functions, as many different Python modules have different requirements - the `walking` package has similar functionality.
+
+We can load the environment as follows:
+```{r}
+#| eval: false
+stepcount::use_stepcount_condaenv()
+```
+
+The model has options to speed up operations using GPU (vs. CPU) processing, but can run relatively quickly on individual data and can be parallelized for each subject:
+```{r run_stepcount}
+#| cache: true
+sc = stepcount::stepcount(df, sample_rate = sample_rate, model_type = "ssl")
+```
+
+If no model is specified, the model is downloaded to a temporary directory, but users can use the `stepcount::sc_download_model` function to download the model file, store it, and pass it via the `model_path` argument.  We can also pass in a vector of file names or a list of `data.frame`s to run this procedure for multiple data sets while only loading the model once.
+
+The output of `stepcount` is a list of different pieces of information, including information about the device:
+
+```{r stepcount_output}
+names(sc)
+```
+
+but the main elements of interest are the `data.frame` of estimated steps, which has the associated timestamps:
+
+```{r stepcount_steps}
+head(sc$steps)
+```
+
+and similarly a `data.frame` of flagged time for walking:
+
+```{r stepcount_walking}
+head(sc$walking)
+```
+
+
+The `stepcount` method estimates steps in 10-second windows, which we can aggregate into minutes:
+
+```{r sc_steps_minute}
+sc60 = sc$steps %>% 
+  mutate(time = floor_date(time, "1 minute")) %>% 
+  group_by(time) %>% 
+  summarise(steps = sum(steps), .groups = "drop")
+head(sc60)
+```
+
+Combining these step counts/walking flags with non-wear can give estimates of walking speed, walking time, and average total number of steps. 
+
+
+## Sleep measures
+@cole1992automatic created a sleep scoring algorithm is primarily used for adult populations as the method was derived on adults 35 to 65 years old and is implemented in `actigraph.sleepr::apply_cole_kripke`.
+
+@tudor2014fully detected sleep information from waist worn accelerometers on children and the algorithm "detects periods of time in bed and, for each period, computes sleep quality metrics such as total minutes in bed, total sleep time, number and average length of awakenings, movement and fragmentation index" (help file from function `actigraph.sleepr::apply_tudor_locke`).   We can employ these methods, but note that they may not be applicable to the wrist (CITE).
+
+```{r redata_ac60}
+data = ac60 %>%
+  rename(timestamp = time,
+         axis1 = Axis1,
+         axis2 = Axis2,
+         axis3 = Axis3)
+mode(data$timestamp) = "double"
+```
+
+```{r sleep_info}
+ck = actigraph.sleepr::apply_cole_kripke(data)
+head(ck)
+```
+
+Here we will rename some of the output columns and create a `date` and `hourtime` column, which is the date of the data and only the time in `hms` format (no date), which is useful for plotting.
+```{r ck_data_transform}
+ck_df = ck %>% 
+  rename(time = timestamp) %>% 
+  mutate(date = lubridate::as_date(time),
+         hourtime = hms::as_hms(time))
+```
+
+Here we can plot the activity count data with the estimated activity (sleep/wake) as colored in the background:
+```{r ck_plot}
+#| fig-height: 10
+#| fig-width: 12
+ck_df %>% 
+  ggplot(aes(x = time, y = AC)) + 
+  geom_segment(
+    aes(x = time, xend = time,
+        y = -Inf, yend = Inf, color = sleep), alpha = 0.25) + 
+  geom_line() 
+```
+This may be easier to see by day, so we can facet the data:
+
+```{r ck_plot_day}
+#| fig-height: 16
+#| fig-width: 8
+ck_df %>% 
+  ggplot(aes(x = hourtime, y = AC)) + 
+  geom_segment(
+    aes(x = hourtime, xend = hourtime,
+        y = -Inf, yend = Inf, color = sleep), alpha = 0.25) + 
+  geom_line() +
+  facet_wrap(~ date, ncol = 1)
+```
+
+Also, we should cross-reference this with non-wear because much of the sleep may be non-wear.
+
+# Alternative Measures and Processing
+
+!! Needs more discussion
+
+## GGIR Processing
+
+We present a set of processing steps and functions to go from raw accelerometry to a processed data set for analysis.  The `GGIR` package has a number of these steps bundled together into multiple parts, along with a number of other derivative measures (e.g. more sleep information) that may be of interest.  The `GGIR` pipeline runs from a data directory where the accelerometer files are or a list of accelerometer files.  The directory should not include other data that could be mistaken for accelerometer data (e.g. CSV files).  The output files are deposited in the `outputdir` output directory.  Running the one GT3X file would look something like:
+
+```{r GGIR_run}
+#| cache: true
+datadir = dirname(gt3x_file)
+outdir = here::here("ggir_output")
+dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
+res = GGIR(datadir = datadir, outputdir = outdir)
+```
+
+The corresponding output from this pipeline can be seen in @fig-ggir-output.  The `GGIR` pipeline also has a number of quality control measures that are not present in the pipeline we have outlined, such as number of valid days and automated recommendations for day inclusion based on a threshold, and may provide good insights into a researchers' data.
+
+```{r ggir_output}
+#| label: fig-ggir-output
+#| fig-cap: Output files and folder structure from the GGIR pipeline.  We see a number of CSV files, PDF reports, and R data files for use in analysis and quality checking.
+#| echo: false
+knitr::include_graphics("images/ggir_output.png")
+```
+
+The `GGIR` pipeline is comprehensive and has a number of options available for analysts, but may be overwhelming to users. We aim to break each step down in this tutorial, describing the intent of each step and its potential issues.  
+
+## Sleep Classification
+
+Although we show one way of getting sleep classification from raw data, other models exist.  
+
+@sundararajan2021sleep created a random forest classifiers for non-wear and  sleep/wake along with a [GitHub repository](https://github.com/wadpac/Sundararajan-SleepClassification-2021), with associated random forest weights [@kalaivani_sundararajan_2020_3752645].  For the input of raw accelerometer data, these classifiers provides a Wake/Sleep/Non-wear classification for every 30 seconds.  The work also created multiple REM states as a classifier output, but the weights for that model.  Similarly, the [`swan` package](https://github.com/muschellij2/swan) implements the method for sleep/wake/non-wear detection from @thapa2022detecting.  
+
+# Conclusion
+
+In this work we have presented a tutorial on how to read in wrist-worn accelerometer data, plot and process the data, and create a series of summary measures for analysis. We have shown how to calculate activity counts, MIMS units, AUC, ENMO, AI, MAD, and step counts.  We have also shown how to calculate these measures on gravity-calibrated data and how to compare the results. 
+
+We have also shown how to use the `stepcount` package to estimate step counts and the `actigraph.sleepr` package to estimate sleep information from accelerometer data and provided some basic documentation of how to use the `GGIR` pipeline to process accelerometer data.  Though `GGIR` remains a popular processing pipeline, we believe this modular framework is more conducive to understanding, documenting, and tailoring a pipeline for researchers' analysis. 
+
+Although we have no population-based analysis in this document, this tutorial aims at walking through each step of the data transformation process.  @functional_analysis_r provides a comprehensive view on analyzing functional data in R, with an aim on wearable data, specifically accelerometer data and can provide the rationale and code for powerful population-level analysis.  
+
+All code for this tutorial is available at https://github.com/muschellij2/Wrist-Worn-Accelerometry-Processing-Pipeline.
+
+# References

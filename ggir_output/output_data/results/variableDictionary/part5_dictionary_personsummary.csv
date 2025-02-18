@@ -1,0 +1,218 @@
+Variable,Definition
+filename,File name 
+ID,File/participant identifier 
+startday,Calendar date for the first day in the recording 
+calendar_date,Calendar date 
+Nvaliddays,Number of valid days based on the cleaning parameters for part 5 
+Nvaliddays_WD,Number of valid weekdays based on the cleaning parameters for part 5 
+Nvaliddays_WE,Number of valid weekend days based on the cleaning parameters for part 5 
+Ndaysleeper,"Number of nights classified as daysleeper (i.e., wake-up time after noon) "
+Ncleaningcodezero,"Number of nights with cleaning code for the sleep period time classification = 0 (i.e., no problem) "
+Ncleaningcode1,"Number of nights with cleaning code for the sleep period time classification = 1 (i.e., no sleeplog) "
+Ncleaningcode2,"Number of nights with cleaning code for the sleep period time classification = 2 (i.e., insufficient valid data) "
+Ncleaningcode3,"Number of nights with cleaning code for the sleep period time classification = 3 (i.e., no acc data available) "
+Ncleaningcode4,"Number of nights with cleaning code for the sleep period time classification = 4 (i.e., no nights) "
+Ncleaningcode5,"Number of nights with cleaning code for the sleep period time classification = 5 (i.e., guider-defined SPT) "
+Ncleaningcode6,"Number of nights with cleaning code for the sleep period time classification = 6 (i.e., SPT not found) "
+Nsleeplog_used,Number of nights in which the sleep log was used as guider for the sleep period time identification 
+Nacc_available,Number of nights in which accelerometer data was available for the identification of the sleep period time 
+start_end_window,Start and end time for the window (hh:mm:ss-hh:mm:ss) 
+sleeponset_pla,Sleep onset time (hours from previous midnight) - plain average
+wakeup_pla,Sleep onset time (hours from previous midnight) - plain average
+nonwear_perc_day_pla,Time accumulated in non-wear time during the waking time (%) - plain average
+nonwear_perc_spt_pla,Time accumulated in non-wear time during the sleep period time (%) - plain average
+nonwear_perc_day_spt_pla,"Time accumulated in non-wear time during the waking time and sleep period time (i.e., full window) (%) - plain average"
+dur_spt_sleep_min_pla,Time accumulated in sleep during the sleep period time (minutes) - plain average
+dur_spt_wake_IN_min_pla,Time accumulated in awake inactivity during the sleep period time (minutes) - plain average
+dur_spt_wake_LIG_min_pla,Time accumulated in awake light physical activity during the sleep period time (minutes) - plain average
+dur_spt_wake_MOD_min_pla,Time accumulated in awake moderate physical activity during the sleep period time (minutes) - plain average
+dur_spt_wake_VIG_min_pla,Time accumulated in awake vigorous physical activity during the sleep period time (minutes) - plain average
+dur_day_IN_unbt_min_pla,Time accumulated in unbouted inactivity (0-10 min) during the waking time (minutes) - plain average
+dur_day_LIG_unbt_min_pla,Time accumulated in unbouted light physical activity (0-1 min) during the waking time (minutes) - plain average
+dur_day_MOD_unbt_min_pla,Time accumulated in unbouted moderate physical activity (0-1 min) during the waking time (minutes) - plain average
+dur_day_VIG_unbt_min_pla,Time accumulated in unbouted vigorous physical activity (0-1 min) during the waking time (minutes) - plain average
+dur_day_MVPA_bts_10_min_pla,Time accumulated in bouts of 10 min moderate-to-vigorous physical activity during the waking time (minutes) - plain average
+dur_day_MVPA_bts_5_10_min_pla,Time accumulated in bouts of 5-10 min moderate-to-vigorous physical activity during the waking time (minutes) - plain average
+dur_day_MVPA_bts_1_5_min_pla,Time accumulated in bouts of 1-5 min moderate-to-vigorous physical activity during the waking time (minutes) - plain average
+dur_day_IN_bts_30_min_pla,Time accumulated in bouts of 30 min inactivity during the waking time (minutes) - plain average
+dur_day_IN_bts_20_30_min_pla,Time accumulated in bouts of 20-30 min inactivity during the waking time (minutes) - plain average
+dur_day_IN_bts_10_20_min_pla,Time accumulated in bouts of 10-20 min inactivity during the waking time (minutes) - plain average
+dur_day_LIG_bts_10_min_pla,Time accumulated in bouts of 10 min light physical activity during the waking time (minutes) - plain average
+dur_day_LIG_bts_5_10_min_pla,Time accumulated in bouts of 5-10 min light physical activity during the waking time (minutes) - plain average
+dur_day_LIG_bts_1_5_min_pla,Time accumulated in bouts of 1-5 min light physical activity during the waking time (minutes) - plain average
+dur_day_total_IN_min_pla,Time accumulated in inactivity during the waking time (minutes) - plain average
+dur_day_total_LIG_min_pla,Time accumulated in light physical activity during the waking time (minutes) - plain average
+dur_day_total_MOD_min_pla,Time accumulated in moderate physical activity during the waking time (minutes) - plain average
+dur_day_total_VIG_min_pla,Time accumulated in vigorous physical activity during the waking time (minutes) - plain average
+dur_day_min_pla,Time accumulated during the waking time (minutes) - plain average
+dur_spt_min_pla,Time accumulated during the sleep period time (minutes) - plain average
+dur_day_spt_min_pla,"Time accumulated during the waking time and sleep period time (i.e., full window) (minutes) - plain average"
+N_atleast5minwakenight_pla,Number of blocks awake after sleep onset with a duration of at least 5 minutes - plain average
+sleep_efficiency_pla,Sleep efficiency (%) - plain average
+tail_expansion_minutes_pla,Time expanded at the end of the recording with expand_tail_max_hours to trigger the last sleep onset identification (min) - plain average
+ACC_spt_sleep_mg_pla,Mean acceleration in sleep during the sleep period time (mili-gravity units) - plain average
+ACC_spt_wake_IN_mg_pla,Mean acceleration in awake inactivity during the sleep period time (mili-gravity units) - plain average
+ACC_spt_wake_LIG_mg,Mean acceleration in awake light physical activity during the sleep period time (mili-gravity units) 
+ACC_spt_wake_MOD_mg_pla,Mean acceleration in awake moderate physical activity during the sleep period time (mili-gravity units) - plain average
+ACC_spt_wake_VIG_mg,Mean acceleration in awake vigorous physical activity during the sleep period time (mili-gravity units) 
+ACC_day_IN_unbt_mg_pla,Mean acceleration in unbouted inactivity (0-10 min) during the waking time (mili-gravity units) - plain average
+ACC_day_LIG_unbt_mg_pla,Mean acceleration in unbouted light physical activity (0-1 min) during the waking time (mili-gravity units) - plain average
+ACC_day_MOD_unbt_mg_pla,Mean acceleration in unbouted moderate physical activity (0-1 min) during the waking time (mili-gravity units) - plain average
+ACC_day_VIG_unbt_mg_pla,Mean acceleration in unbouted vigorous physical activity (0-1 min) during the waking time (mili-gravity units) - plain average
+ACC_day_MVPA_bts_10_mg_pla,Mean acceleration in bouts of 10 min moderate-to-vigorous physical activity during the waking time (mili-gravity units) - plain average
+ACC_day_MVPA_bts_5_10_mg_pla,Mean acceleration in bouts of 5-10 min moderate-to-vigorous physical activity during the waking time (mili-gravity units) - plain average
+ACC_day_MVPA_bts_1_5_mg_pla,Mean acceleration in bouts of 1-5 min moderate-to-vigorous physical activity during the waking time (mili-gravity units) - plain average
+ACC_day_IN_bts_30_mg_pla,Mean acceleration in bouts of 30 min inactivity during the waking time (mili-gravity units) - plain average
+ACC_day_IN_bts_20_30_mg_pla,Mean acceleration in bouts of 20-30 min inactivity during the waking time (mili-gravity units) - plain average
+ACC_day_IN_bts_10_20_mg_pla,Mean acceleration in bouts of 10-20 min inactivity during the waking time (mili-gravity units) - plain average
+ACC_day_LIG_bts_10_mg_pla,Mean acceleration in bouts of 10 min light physical activity during the waking time (mili-gravity units) - plain average
+ACC_day_LIG_bts_5_10_mg_pla,Mean acceleration in bouts of 5-10 min light physical activity during the waking time (mili-gravity units) - plain average
+ACC_day_LIG_bts_1_5_mg_pla,Mean acceleration in bouts of 1-5 min light physical activity during the waking time (mili-gravity units) - plain average
+ACC_day_total_IN_mg_pla,Mean acceleration in inactivity during the waking time (mili-gravity units) - plain average
+ACC_day_total_LIG_mg_pla,Mean acceleration in light physical activity during the waking time (mili-gravity units) - plain average
+ACC_day_total_MOD_mg_pla,Mean acceleration in moderate physical activity during the waking time (mili-gravity units) - plain average
+ACC_day_total_VIG_mg_pla,Mean acceleration in vigorous physical activity during the waking time (mili-gravity units) - plain average
+ACC_day_mg_pla,Mean acceleration during the waking time (mili-gravity units) - plain average
+ACC_spt_mg_pla,Mean acceleration during the sleep period time (mili-gravity units) - plain average
+ACC_spt_mg_median_pla,Mean acceleration during the sleep period time (mili-gravity units) - plain average
+ACC_spt_mg_stdev_pla,Mean acceleration during the sleep period time (mili-gravity units) - plain average
+ACC_day_spt_mg_pla,"Mean acceleration during the waking time and sleep period time (i.e., full window) (mili-gravity units) - plain average"
+quantile_mostactive60min_mg_pla,Acceleration above which (percentile) the most active 60 minutes of the day are accumulated (mili-gravity units) - plain average
+quantile_mostactive30min_mg_pla,Acceleration above which (percentile) the most active 30 minutes of the day are accumulated (mili-gravity units) - plain average
+L5VALUE_pla,Mean acceleration during the 5 consecutive hours with the lowest acceleration (mili-gravity units) - plain average
+M5VALUE_pla,Mean acceleration during the 5 consecutive hours with the highest acceleration (mili-gravity units) - plain average
+L5TIME_num_pla,Starting time during the 5 consecutive hours with the lowest acceleration (timestamp) - plain average
+M5TIME_num_pla,Starting time during the 5 consecutive hours with the highest acceleration (timestamp) - plain average
+Nbouts_day_MVPA_bts_10_pla,Number of bouts in moderate-to-vigorous physical activity during the waking time - plain average
+Nbouts_day_MVPA_bts_5_10_pla,Number of bouts in moderate-to-vigorous physical activity during the waking time - plain average
+Nbouts_day_MVPA_bts_1_5_pla,Number of bouts in moderate-to-vigorous physical activity during the waking time - plain average
+Nbouts_day_IN_bts_30_pla,Number of bouts in inactivity during the waking time - plain average
+Nbouts_day_IN_bts_20_30_pla,Number of bouts in inactivity during the waking time - plain average
+Nbouts_day_IN_bts_10_20_pla,Number of bouts in inactivity during the waking time - plain average
+Nbouts_day_LIG_bts_10_pla,Number of bouts in light physical activity during the waking time - plain average
+Nbouts_day_LIG_bts_5_10_pla,Number of bouts in light physical activity during the waking time - plain average
+Nbouts_day_LIG_bts_1_5_pla,Number of bouts in light physical activity during the waking time - plain average
+Nblocks_spt_sleep_pla,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in sleep during the sleep period time - plain average
+Nblocks_spt_wake_IN_pla,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in awake inactivity during the sleep period time - plain average
+Nblocks_spt_wake_LIG_pla,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in awake light physical activity during the sleep period time - plain average
+Nblocks_spt_wake_MOD_pla,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in awake moderate physical activity during the sleep period time - plain average
+Nblocks_spt_wake_VIG_pla,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in awake vigorous physical activity during the sleep period time - plain average
+Nblocks_day_IN_unbt_pla,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in unbouted inactivity (0-10 min) during the waking time - plain average
+Nblocks_day_LIG_unbt_pla,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in unbouted light physical activity (0-1 min) during the waking time - plain average
+Nblocks_day_MOD_unbt_pla,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in unbouted moderate physical activity (0-1 min) during the waking time - plain average
+Nblocks_day_VIG_unbt_pla,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in unbouted vigorous physical activity (0-1 min) during the waking time - plain average
+Nblocks_day_MVPA_bts_10_pla,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in bouts of 10 min moderate-to-vigorous physical activity during the waking time - plain average
+Nblocks_day_MVPA_bts_5_10_pla,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in bouts of 5-10 min moderate-to-vigorous physical activity during the waking time - plain average
+Nblocks_day_MVPA_bts_1_5_pla,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in bouts of 1-5 min moderate-to-vigorous physical activity during the waking time - plain average
+Nblocks_day_IN_bts_30_pla,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in bouts of 30 min inactivity during the waking time - plain average
+Nblocks_day_IN_bts_20_30_pla,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in bouts of 20-30 min inactivity during the waking time - plain average
+Nblocks_day_IN_bts_10_20_pla,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in bouts of 10-20 min inactivity during the waking time - plain average
+Nblocks_day_LIG_bts_10_pla,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in bouts of 10 min light physical activity during the waking time - plain average
+Nblocks_day_LIG_bts_5_10_pla,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in bouts of 5-10 min light physical activity during the waking time - plain average
+Nblocks_day_LIG_bts_1_5_pla,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in bouts of 1-5 min light physical activity during the waking time - plain average
+Nblocks_day_total_IN_pla,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in inactivity during the waking time - plain average
+Nblocks_day_total_LIG_pla,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in light physical activity during the waking time - plain average
+Nblocks_day_total_MOD_pla,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in moderate physical activity during the waking time - plain average
+Nblocks_day_total_VIG_pla,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in vigorous physical activity during the waking time - plain average
+boutcriter.in,Fraction of the bout that needs to be below the inactivity threshold - plain average
+boutcriter.lig,Fraction of the bout that needs to meet the light physical activity threshold - plain average
+boutcriter.mvpa,Fraction of the bout that needs to be above the moderate physical activity threshold - plain average
+boutdur.in,Duration/s of inactivity bouts (min) - plain average
+boutdur.lig,Duration/s of light physical activity bouts (min) - plain average
+boutdur.mvpa,Duration/s of moderate-to-vigorous physical activity bouts (min) - plain average
+GGIRversion,""
+sleeponset_wei,Sleep onset time (hours from previous midnight) - weighted average
+wakeup_wei,Sleep onset time (hours from previous midnight) - weighted average
+nonwear_perc_day_wei,Time accumulated in non-wear time during the waking time (%) - weighted average
+nonwear_perc_spt_wei,Time accumulated in non-wear time during the sleep period time (%) - weighted average
+nonwear_perc_day_spt_wei,"Time accumulated in non-wear time during the waking time and sleep period time (i.e., full window) (%) - weighted average"
+dur_spt_sleep_min_wei,Time accumulated in sleep during the sleep period time (minutes) - weighted average
+dur_spt_wake_IN_min_wei,Time accumulated in awake inactivity during the sleep period time (minutes) - weighted average
+dur_spt_wake_LIG_min_wei,Time accumulated in awake light physical activity during the sleep period time (minutes) - weighted average
+dur_spt_wake_MOD_min_wei,Time accumulated in awake moderate physical activity during the sleep period time (minutes) - weighted average
+dur_spt_wake_VIG_min_wei,Time accumulated in awake vigorous physical activity during the sleep period time (minutes) - weighted average
+dur_day_IN_unbt_min_wei,Time accumulated in unbouted inactivity (0-10 min) during the waking time (minutes) - weighted average
+dur_day_LIG_unbt_min_wei,Time accumulated in unbouted light physical activity (0-1 min) during the waking time (minutes) - weighted average
+dur_day_MOD_unbt_min_wei,Time accumulated in unbouted moderate physical activity (0-1 min) during the waking time (minutes) - weighted average
+dur_day_VIG_unbt_min_wei,Time accumulated in unbouted vigorous physical activity (0-1 min) during the waking time (minutes) - weighted average
+dur_day_MVPA_bts_10_min_wei,Time accumulated in bouts of 10 min moderate-to-vigorous physical activity during the waking time (minutes) - weighted average
+dur_day_MVPA_bts_5_10_min_wei,Time accumulated in bouts of 5-10 min moderate-to-vigorous physical activity during the waking time (minutes) - weighted average
+dur_day_MVPA_bts_1_5_min_wei,Time accumulated in bouts of 1-5 min moderate-to-vigorous physical activity during the waking time (minutes) - weighted average
+dur_day_IN_bts_30_min_wei,Time accumulated in bouts of 30 min inactivity during the waking time (minutes) - weighted average
+dur_day_IN_bts_20_30_min_wei,Time accumulated in bouts of 20-30 min inactivity during the waking time (minutes) - weighted average
+dur_day_IN_bts_10_20_min_wei,Time accumulated in bouts of 10-20 min inactivity during the waking time (minutes) - weighted average
+dur_day_LIG_bts_10_min_wei,Time accumulated in bouts of 10 min light physical activity during the waking time (minutes) - weighted average
+dur_day_LIG_bts_5_10_min_wei,Time accumulated in bouts of 5-10 min light physical activity during the waking time (minutes) - weighted average
+dur_day_LIG_bts_1_5_min_wei,Time accumulated in bouts of 1-5 min light physical activity during the waking time (minutes) - weighted average
+dur_day_total_IN_min_wei,Time accumulated in inactivity during the waking time (minutes) - weighted average
+dur_day_total_LIG_min_wei,Time accumulated in light physical activity during the waking time (minutes) - weighted average
+dur_day_total_MOD_min_wei,Time accumulated in moderate physical activity during the waking time (minutes) - weighted average
+dur_day_total_VIG_min_wei,Time accumulated in vigorous physical activity during the waking time (minutes) - weighted average
+dur_day_min_wei,Time accumulated during the waking time (minutes) - weighted average
+dur_spt_min_wei,Time accumulated during the sleep period time (minutes) - weighted average
+dur_day_spt_min_wei,"Time accumulated during the waking time and sleep period time (i.e., full window) (minutes) - weighted average"
+N_atleast5minwakenight_wei,Number of blocks awake after sleep onset with a duration of at least 5 minutes - weighted average
+sleep_efficiency_wei,Sleep efficiency (%) - weighted average
+tail_expansion_minutes_wei,Time expanded at the end of the recording with expand_tail_max_hours to trigger the last sleep onset identification (min) - weighted average
+ACC_spt_sleep_mg_wei,Mean acceleration in sleep during the sleep period time (mili-gravity units) - weighted average
+ACC_spt_wake_IN_mg_wei,Mean acceleration in awake inactivity during the sleep period time (mili-gravity units) - weighted average
+ACC_spt_wake_MOD_mg_wei,Mean acceleration in awake moderate physical activity during the sleep period time (mili-gravity units) - weighted average
+ACC_day_IN_unbt_mg_wei,Mean acceleration in unbouted inactivity (0-10 min) during the waking time (mili-gravity units) - weighted average
+ACC_day_LIG_unbt_mg_wei,Mean acceleration in unbouted light physical activity (0-1 min) during the waking time (mili-gravity units) - weighted average
+ACC_day_MOD_unbt_mg_wei,Mean acceleration in unbouted moderate physical activity (0-1 min) during the waking time (mili-gravity units) - weighted average
+ACC_day_VIG_unbt_mg_wei,Mean acceleration in unbouted vigorous physical activity (0-1 min) during the waking time (mili-gravity units) - weighted average
+ACC_day_MVPA_bts_10_mg_wei,Mean acceleration in bouts of 10 min moderate-to-vigorous physical activity during the waking time (mili-gravity units) - weighted average
+ACC_day_MVPA_bts_5_10_mg_wei,Mean acceleration in bouts of 5-10 min moderate-to-vigorous physical activity during the waking time (mili-gravity units) - weighted average
+ACC_day_MVPA_bts_1_5_mg_wei,Mean acceleration in bouts of 1-5 min moderate-to-vigorous physical activity during the waking time (mili-gravity units) - weighted average
+ACC_day_IN_bts_30_mg_wei,Mean acceleration in bouts of 30 min inactivity during the waking time (mili-gravity units) - weighted average
+ACC_day_IN_bts_20_30_mg_wei,Mean acceleration in bouts of 20-30 min inactivity during the waking time (mili-gravity units) - weighted average
+ACC_day_IN_bts_10_20_mg_wei,Mean acceleration in bouts of 10-20 min inactivity during the waking time (mili-gravity units) - weighted average
+ACC_day_LIG_bts_10_mg_wei,Mean acceleration in bouts of 10 min light physical activity during the waking time (mili-gravity units) - weighted average
+ACC_day_LIG_bts_5_10_mg_wei,Mean acceleration in bouts of 5-10 min light physical activity during the waking time (mili-gravity units) - weighted average
+ACC_day_LIG_bts_1_5_mg_wei,Mean acceleration in bouts of 1-5 min light physical activity during the waking time (mili-gravity units) - weighted average
+ACC_day_total_IN_mg_wei,Mean acceleration in inactivity during the waking time (mili-gravity units) - weighted average
+ACC_day_total_LIG_mg_wei,Mean acceleration in light physical activity during the waking time (mili-gravity units) - weighted average
+ACC_day_total_MOD_mg_wei,Mean acceleration in moderate physical activity during the waking time (mili-gravity units) - weighted average
+ACC_day_total_VIG_mg_wei,Mean acceleration in vigorous physical activity during the waking time (mili-gravity units) - weighted average
+ACC_day_mg_wei,Mean acceleration during the waking time (mili-gravity units) - weighted average
+ACC_spt_mg_wei,Mean acceleration during the sleep period time (mili-gravity units) - weighted average
+ACC_spt_mg_median_wei,Mean acceleration during the sleep period time (mili-gravity units) - weighted average
+ACC_spt_mg_stdev_wei,Mean acceleration during the sleep period time (mili-gravity units) - weighted average
+ACC_day_spt_mg_wei,"Mean acceleration during the waking time and sleep period time (i.e., full window) (mili-gravity units) - weighted average"
+quantile_mostactive60min_mg_wei,Acceleration above which (percentile) the most active 60 minutes of the day are accumulated (mili-gravity units) - weighted average
+quantile_mostactive30min_mg_wei,Acceleration above which (percentile) the most active 30 minutes of the day are accumulated (mili-gravity units) - weighted average
+L5VALUE_wei,Mean acceleration during the 5 consecutive hours with the lowest acceleration (mili-gravity units) - weighted average
+M5VALUE_wei,Mean acceleration during the 5 consecutive hours with the highest acceleration (mili-gravity units) - weighted average
+L5TIME_num_wei,Starting time during the 5 consecutive hours with the lowest acceleration (timestamp) - weighted average
+M5TIME_num_wei,Starting time during the 5 consecutive hours with the highest acceleration (timestamp) - weighted average
+Nbouts_day_MVPA_bts_10_wei,Number of bouts in moderate-to-vigorous physical activity during the waking time - weighted average
+Nbouts_day_MVPA_bts_5_10_wei,Number of bouts in moderate-to-vigorous physical activity during the waking time - weighted average
+Nbouts_day_MVPA_bts_1_5_wei,Number of bouts in moderate-to-vigorous physical activity during the waking time - weighted average
+Nbouts_day_IN_bts_30_wei,Number of bouts in inactivity during the waking time - weighted average
+Nbouts_day_IN_bts_20_30_wei,Number of bouts in inactivity during the waking time - weighted average
+Nbouts_day_IN_bts_10_20_wei,Number of bouts in inactivity during the waking time - weighted average
+Nbouts_day_LIG_bts_10_wei,Number of bouts in light physical activity during the waking time - weighted average
+Nbouts_day_LIG_bts_5_10_wei,Number of bouts in light physical activity during the waking time - weighted average
+Nbouts_day_LIG_bts_1_5_wei,Number of bouts in light physical activity during the waking time - weighted average
+Nblocks_spt_sleep_wei,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in sleep during the sleep period time - weighted average
+Nblocks_spt_wake_IN_wei,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in awake inactivity during the sleep period time - weighted average
+Nblocks_spt_wake_LIG_wei,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in awake light physical activity during the sleep period time - weighted average
+Nblocks_spt_wake_MOD_wei,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in awake moderate physical activity during the sleep period time - weighted average
+Nblocks_spt_wake_VIG_wei,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in awake vigorous physical activity during the sleep period time - weighted average
+Nblocks_day_IN_unbt_wei,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in unbouted inactivity (0-10 min) during the waking time - weighted average
+Nblocks_day_LIG_unbt_wei,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in unbouted light physical activity (0-1 min) during the waking time - weighted average
+Nblocks_day_MOD_unbt_wei,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in unbouted moderate physical activity (0-1 min) during the waking time - weighted average
+Nblocks_day_VIG_unbt_wei,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in unbouted vigorous physical activity (0-1 min) during the waking time - weighted average
+Nblocks_day_MVPA_bts_10_wei,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in bouts of 10 min moderate-to-vigorous physical activity during the waking time - weighted average
+Nblocks_day_MVPA_bts_5_10_wei,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in bouts of 5-10 min moderate-to-vigorous physical activity during the waking time - weighted average
+Nblocks_day_MVPA_bts_1_5_wei,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in bouts of 1-5 min moderate-to-vigorous physical activity during the waking time - weighted average
+Nblocks_day_IN_bts_30_wei,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in bouts of 30 min inactivity during the waking time - weighted average
+Nblocks_day_IN_bts_20_30_wei,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in bouts of 20-30 min inactivity during the waking time - weighted average
+Nblocks_day_IN_bts_10_20_wei,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in bouts of 10-20 min inactivity during the waking time - weighted average
+Nblocks_day_LIG_bts_10_wei,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in bouts of 10 min light physical activity during the waking time - weighted average
+Nblocks_day_LIG_bts_5_10_wei,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in bouts of 5-10 min light physical activity during the waking time - weighted average
+Nblocks_day_LIG_bts_1_5_wei,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in bouts of 1-5 min light physical activity during the waking time - weighted average
+Nblocks_day_total_IN_wei,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in inactivity during the waking time - weighted average
+Nblocks_day_total_LIG_wei,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in light physical activity during the waking time - weighted average
+Nblocks_day_total_MOD_wei,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in moderate physical activity during the waking time - weighted average
+Nblocks_day_total_VIG_wei,Number of blocks (defined as consecutive series of epochs with the same behavioural class) in vigorous physical activity during the waking time - weighted average
