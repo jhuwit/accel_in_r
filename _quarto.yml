@@ -3,7 +3,7 @@ project:
   output-dir: docs
 
 website:
-  title: "accel_in_r"
+  title: "Accelerometry Analysis and Processing in R"
   navbar:
     left:
       - href: index.qmd
