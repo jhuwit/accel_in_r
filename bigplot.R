@@ -71,6 +71,8 @@ long = long %>%
 plot = long %>%
   ggplot(aes(x = hourtime, y = acceleration, colour = axis)) +
   facet_wrap(~ date, ncol = 1) +
-  geom_step()
-ggsave(plot, filename = here::here("docs/images/bigplot.png"),
-       width = 17, height = 14, units = "in")
+  geom_step() +
+  guides(colour = guide_legend(position = "bottom")) +
+  theme(text = element_text(size = 20))
+ggsave(plot, filename = here::here("images/bigplot.png"),
+       width = 5, height = 10, units = "in", dpi = 300)

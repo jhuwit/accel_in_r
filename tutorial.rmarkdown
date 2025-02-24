@@ -22,6 +22,9 @@ library(dplyr)
 knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
 ```
 
+
+
+
 ## Introduction to Accelerometer Data
 
 ### Learning Objectives
@@ -144,6 +147,9 @@ Timestamp                  X        Y        Z
 
 ## Getting Data
 
+
+
+
 ```{r download_file, echo = TRUE}
 gt3x_file = here::here("data/AI15_MOS2D09170398_2017-10-30.gt3x")
 if (!file.exists(gt3x_file)) {
@@ -155,10 +161,16 @@ if (!file.exists(gt3x_file)) {
 }
 ```
 
+
+
+
 ## Read in the data
 - Using `read.gt3x::read.gt3x` function
 - `asDataFrame` - make it a `data.frame`
 - `imputeZeroes` - discuss idle sleep mode
+
+
+
 
 ```{r read_file}
 library(read.gt3x)
@@ -166,6 +178,9 @@ library(read.gt3x)
                            asDataFrame = TRUE, 
                            imputeZeroes = TRUE))
 ```
+
+
+
 
 ::: {.notes}
 Idle sleep mode is a battery saving option when enabling and setting up ActiGraph devices.  It's a hassle, don't use it unless you have to.  It causes "gaps" in the GT3X file that are truly missing , but this is an issue with many processing methods (gaps), so you can "impute" zeroes into the data set, which aren't correct either. 
@@ -179,20 +194,32 @@ Idle sleep mode is a battery saving option when enabling and setting up ActiGrap
 
 ::: {.column width="50%"}
 
+
+
+
 ```{r options}
 getOption("digits.secs")
 options(digits.secs = 3)
 df
 ```
 
+
+
+
 ::: 
 
 ::: {.column width="50%"}
+
+
+
 
 ```{r digits_secs_tbl}
 options(digits.secs = 3)
 dplyr::as_tibble(df)
 ```
+
+
+
 
 ::: 
 
@@ -204,23 +231,41 @@ dplyr::as_tibble(df)
 
 - Time zones are hell
 
+
+
+
 ```{r tz}
 lubridate::tz(df$time)
 ```
 
+
+
+
 - `read.gt3x` attached a GMT timezone to the data, but there is a note
+
+
+
 
 ```{r gt3x_note, echo = FALSE}
 knitr::include_graphics(here::here("images/read.gt3x_note.png"))
 ```
 
+
+
+
 - "local" means local to the device/initialization, not your machine
 
 Can do `tz<-` to change the timezone if you want (watch out for DST):
 
+
+
+
 ```{r, eval=FALSE}
 tz(df$time) = "EST"
 ```
+
+
+
 
 
 ## Header - in the attributes
@@ -231,6 +276,9 @@ The format of `df` is a `activity_df`, which is why you see the header informati
 
 ::: {.column width="50%"}
 
+
+
+
 ```{r attributes_df}
 names(attributes(df))
 attr(df, "sample_rate")
@@ -238,13 +286,22 @@ attr(df, "acceleration_max")
 attr(df, "time_zone")
 ```
 
+
+
+
 :::
 
 ::: {.column width="50%"}
 
+
+
+
 ```{r show_attr_header}
 attr(df, "header")
 ```
+
+
+
 :::
 ::::
 
@@ -254,10 +311,16 @@ attr(df, "header")
 
 - Again, these zeroes are not "real" zeroes
 
+
+
+
 ```{r zeroes}
 library(dplyr)
 df %>% filter(X == 0, Y == 0, Z == 0)
 ```
+
+
+
 
 ## Fill Zeros - using LOCF
 
@@ -272,6 +335,9 @@ df %>% filter(X == 0, Y == 0, Z == 0)
 :::
 
 ::: {.column width="50%"}
+
+
+
 
 ```{r fill_data}
 sample_rate = attr(df, "sample_rate")
@@ -291,7 +357,6 @@ df = df %>%
   tidyr::fill(X, Y, Z, .direction = "down")
 ```
 
-
 ```{r fill_data_show_head}
 #| echo: false
 head(
@@ -305,13 +370,22 @@ head(
 
 
 
+
+
+
 :::
 ::::
+
+
+
 
 ```{r remove, echo=FALSE}
 df = df %>% 
   select(-all_zero)
 ```
+
+
+
 
 # Can now create summaries/metrics, but ...
 
@@ -326,6 +400,9 @@ df = df %>%
 ::: {.column width="50%"}
 
 Reshape the data by Axis: 
+
+
+
 ```{r reshape_data_for_plot_long}
 long = df %>% 
   tidyr::pivot_longer(cols = c(X, Y, Z), 
@@ -333,6 +410,9 @@ long = df %>%
                       values_to = "acceleration")
 head(long)
 ```
+
+
+
 :::
 
 
@@ -340,17 +420,26 @@ head(long)
 
 Lots of data:
 
+
+
+
 ```{r reshape_data_for_plot_long_lot}
 nrow(long)
 long %>% 
   count(axis)
 ```
 
+
+
+
 :::
 
 ::::
 
 ## Plot First 5 minutes (30Hz dense)
+
+
+
 
 ```{r quickplot}
 library(ggplot2); library(lubridate)
@@ -366,7 +455,13 @@ library(ggplot2); library(lubridate)
 ```
 
 
+
+
+
 ## Same Plot with Zeroes
+
+
+
 
 ```{r quickplot2, echo = FALSE}
 (qp_zeros = df_zeros %>% 
@@ -383,21 +478,31 @@ library(ggplot2); library(lubridate)
    geom_line())
 ```
 
+
+
+
 ## Plot all data
 
 - Creating separate `date` and `time` useful for plotting/summary
+
+
+
 
 ```{r long_create_hourtime, eval = FALSE}
 (long = long %>% 
    mutate(date = as_date(time),
           hourtime = hms::as_hms(time)))
 ```
+
 ```{r long_create_hourtime_show, eval = TRUE, echo = FALSE}
 (long %>% 
    head(10) %>% 
    mutate(date = as_date(time),
           hourtime = hms::as_hms(time)))
 ```
+
+
+
 
 
 ##  Plot all data
@@ -407,6 +512,9 @@ library(ggplot2); library(lubridate)
 ::: {.column width="40%"}
 - Has to plot `r nrow(long)` points (takes a long time)
 
+
+
+
 ```{r run_bigplot, eval = FALSE}
 long %>% 
   ggplot(aes(x = hourtime, 
@@ -415,16 +523,25 @@ long %>%
   facet_wrap(~ date, ncol = 1) + 
   geom_step()
 ```
+
+
+
 :::
 
 
 
 ::: {.column width="60%"}
 
+
+
+
 ```{r show_bigplot, out.height="50%"}
 #| echo: false
 knitr::include_graphics(here::here("images/bigplot.png"))
 ```
+
+
+
 
 :::
 ::::
@@ -437,6 +554,9 @@ Take average over each axis and plot
 :::: {.columns}
 
 ::: {.column width="40%"}
+
+
+
 
 
 ```{r run_second_bigplot, eval = FALSE}
@@ -456,10 +576,16 @@ long %>%
   theme(colour = guide_legend(position = "bottom"))
 ```
 
+
+
+
 :::
 
 
 ::: {.column width="60%"}
+
+
+
 
 ```{r run_second_bigplot_show}
 #| fig-height: 5
@@ -468,6 +594,9 @@ long %>%
 #| dependson: run_second_bigplot
 <<run_second_bigplot>>
 ```
+
+
+
 
 :::
 ::::
@@ -487,6 +616,9 @@ Gravity correction [@gravity] or gravity calibration: try to correct data that i
 ## Gravity Correction/Calibration 
 
 The `GGIR::g.calibrate` function takes in a data filename and calculates the calibration parameters.  It is typically useful to input the output of `g.inspectfile` that provides metadata and a specification of the file being calibrated.  
+
+
+
 
 ```{r g_calibrate}
 library(GGIR)
@@ -508,6 +640,9 @@ df_calibrated[, c("X", "Y", "Z")] = scale(
   scale = 1/calibration_params$scale)
 ```
 
+
+
+
 ## Note on Idle Sleep Mode and Gravity Correction
 In the `GGIR` code [g.calibrate calls g.readaccfile](https://github.com/wadpac/GGIR/blob/9c7e794de27380b801451a2d889e6d4ca0677313/R/g.calibrate.R#L105) and if we look deeper, it [reads in the data using `read.gt3x::read.gt3x`](https://github.com/wadpac/GGIR/blob/9c7e794de27380b801451a2d889e6d4ca0677313/R/g.readaccfile.R#L275), **but with the default of `imputeZeroes = FALSE`**.  That means that the calibration does not use any idle sleep mode data for estimation.  
 
@@ -524,6 +659,9 @@ We recommend not using imputed zeroes, or fixed zeroes to estimate calibration p
 
 - [agcounts](https://github.com/bhelsel/agcounts) package implements method from https://github.com/actigraph/agcounts described in @neishabouri2022quantification
 
+
+
+
 ```{r run_ac60}
 ac60 = df %>% 
   agcounts::calculate_counts(epoch = 60L, tz = lubridate::tz(df$time))
@@ -531,6 +669,9 @@ ac60 = ac60 %>%
   select(time, AC = Vector.Magnitude, everything())
 head(ac60)
 ```
+
+
+
 
 - [actilifecounts](https://cran.r-project.org/web/packages/actilifecounts/index.html) another implementation
 - https://github.com/jhuwit/agcounter - another implementation using `reticulate`
@@ -542,6 +683,9 @@ head(ac60)
 
 ::: {.column width="30%"}
 
+
+
+
 ```{r plot_ac60_show}
 #| eval: false
 ac60 %>% 
@@ -552,8 +696,14 @@ ac60 %>%
   facet_wrap(~ date, ncol = 1)  
 ```
 
+
+
+
 :::
 ::: {.column width="70%"}
+
+
+
 
 ```{r plot_ac60}
 #| dependson: plot_ac60_show
@@ -561,6 +711,9 @@ ac60 %>%
 #| out-width: "100%"
 <<run_second_bigplot>>
 ```
+
+
+
 
 :::
 ::::
@@ -581,6 +734,9 @@ These methods have been implemented in the `actigraph.sleepr` package.  But firs
 From this minute-level activity counts data, we can run the Choi algorithm.  First, we must rename the `time` column to `timestamp` and replace the columns with their lowercase counterpart:
 
 
+
+
+
 ```{r choi_data}
 data = ac60 %>%
   rename(timestamp = time,
@@ -589,22 +745,33 @@ data = ac60 %>%
          axis3 = Axis3)
 ```
 
+
+
+
 Need workaround to cast the timestamp as a `double` so the checks pass for no gaps:
+
+
+
 
 ```{r choi_check2}
 mode(data$timestamp) = "double"
 actigraph.sleepr::has_missing_epochs(data)
 ```
 
-
 ```{r choi}
 choi_nonwear = actigraph.sleepr::apply_choi(data, use_magnitude = TRUE)
 head(choi_nonwear)
 ```
 
+
+
+
 ### Estimating Non-wear Minutes
 
 - We can transform this to be seconds instead of current bout format:
+
+
+
 
 ```{r}
 choi_df = purrr::map2_df(
@@ -621,10 +788,16 @@ data %>%
 ```
 
 
+
+
+
 ### Plotting Non-wear
 
 
 Overall, this looks like relatively clean data, but there are some segments (e.g. 2017-11-01 at 20:00) that may be misclassified.
+
+
+
 
 ```{r choi_plot}
 #| fig-height: 10
@@ -643,6 +816,9 @@ plot_data = data %>%
 
 
 
+
+
+
 ## Monitor-Independent Movement Summary (MIMS) Units {#sec-mims}
 [`MIMSunit`](https://github.com/mhealthgroup/mimsunit) package - calculate MIMS unit [@mims]:
  - interpolation of the signal to 100Hz, 
@@ -652,6 +828,9 @@ plot_data = data %>%
  - truncates low signal values to $0$.
 
 You may need to rename the `time` column to `HEADER_TIME_STAMP` for MIMS units depending on the version of the package:
+
+
+
 
 ```{r calculate_mims}
 #| eval: false
@@ -668,9 +847,15 @@ head(mims)
 ```
 
 
+
+
+
 ## Compare MIMS and AC 
 
 @karas2022comparison found a correlation of $\geq 0.97$ between AC and MIMS units.  
+
+
+
 
 ```{r}
 joined = ac60 %>% 
@@ -682,15 +867,27 @@ joined %>%
 ```
 
 
+
+
+
 ## Step Counts
 
 We can load the environment as follows:
+
+
+
 ```{r}
 #| eval: false
 stepcount::use_stepcount_condaenv()
 ```
 
+
+
+
 The model has options to speed up operations using GPU (vs. CPU) processing, but can run relatively quickly on individual data and can be parallelized for each subject:
+
+
+
 ```{r code_stepcount}
 #| eval: false
 stepcount::unset_reticulate_python()
@@ -703,6 +900,9 @@ sc = stepcount::stepcount(df, sample_rate = sample_rate, model_type = "ssl")
 sc = readr::read_rds(here::here("data/stepcount.rds"))
 ```
 
+
+
+
 If no model is specified, the model is downloaded to a temporary directory, but users can use the `stepcount::sc_download_model` function to download the model file, store it, and pass it via the `model_path` argument.  We can also pass in a vector of file names or a list of `data.frame`s to run this procedure for multiple data sets while only loading the model once.
 
 ## Step Counts
@@ -710,25 +910,46 @@ If no model is specified, the model is downloaded to a temporary directory, but 
 
 The output of `stepcount` is a list of different pieces of information, including information about the device:
 
+
+
+
 ```{r stepcount_output}
 names(sc)
 ```
 
+
+
+
 but the main elements of interest are the `data.frame` of estimated steps, which has the associated timestamps:
+
+
+
 
 ```{r stepcount_steps}
 head(sc$steps)
 ```
 
+
+
+
 and similarly a `data.frame` of flagged time for walking:
+
+
+
 
 ```{r stepcount_walking}
 head(sc$walking)
 ```
 
+
+
+
 ## Step Counts Aggregation
 
 The `stepcount` method estimates steps in 10-second windows, which we can aggregate into minutes:
+
+
+
 
 ```{r sc_steps_minute}
 sc60 = sc$steps %>% 
@@ -739,6 +960,9 @@ head(sc60)
 ```
 
 
+
+
+
 ## Not Discussed
 
 - GGIR
@@ -747,3 +971,4 @@ head(sc60)
 - Sleep estimation
 
 # References
+

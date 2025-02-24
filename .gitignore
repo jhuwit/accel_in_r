@@ -6,3 +6,6 @@
 /.quarto/
 pipeline_cache/
 001-intro_cache
+tutorial_cache
+docs/001-intro_cache
+docs/tutorial_cache

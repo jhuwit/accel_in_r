@@ -2,8 +2,8 @@
 title: "About"
 ---
 
-About this site
+This is a tutorial on how to process wrist-worn accelerometer data, going from reading in the data, creating actviity counts, estimating non-wear, and estimating steps.
 
-```{r}
-1 + 1
-```
+John Muschelli: https://publichealth.jhu.edu/faculty/2438/john-muschelli/https://johnmuschelli.com/
+Lily Koffman: https://www.lilykoff.com/about/
+
