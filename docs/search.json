@@ -19,5 +19,173 @@
     "title": "initialization",
     "section": "Yes",
     "text": "Yes"
+  },
+  {
+    "objectID": "001-intro.html#introduction-to-accelerometer-data",
+    "href": "001-intro.html#introduction-to-accelerometer-data",
+    "title": "Introduction to Accelerometer Data",
+    "section": "Introduction to Accelerometer Data",
+    "text": "Introduction to Accelerometer Data\nLearning Objectives\n\nUnderstand the basics of procewssing accelerometer data\nGT3X -&gt; CSV/Activity Counts/Steps\nOpen source methods in R\nMany of the methods either have a Python analog\nLots are R wrapper for Python libraries\nGGIR\n\n\nSpeaker notes go here."
+  },
+  {
+    "objectID": "001-intro.html#what-is-accelerometer-data",
+    "href": "001-intro.html#what-is-accelerometer-data",
+    "title": "Introduction to Accelerometer Data",
+    "section": "What is Accelerometer Data?",
+    "text": "What is Accelerometer Data?\n\nSensor that measures acceleration in 3D space: X/Y/Z\nX-axis: Left-Right\nY-axis: Up-Down\nZ-axis: Forward-Backward\nTypically measured in g-forces (g) or m/s²\nSampled at regular time intervals (e.g., 30Hz, 100Hz)\n\nTimestamp                  X        Y        Z\n2025-02-17 12:00:00.0125   0.02     0.98     0.03\n2025-02-17 12:00:00.0250   0.04     0.95     0.05\n2025-02-17 12:00:00.0375  -0.01     0.99     0.02"
+  },
+  {
+    "objectID": "001-intro.html#how-does-it-work",
+    "href": "001-intro.html#how-does-it-work",
+    "title": "Introduction to Accelerometer Data",
+    "section": "How Does It Work?",
+    "text": "How Does It Work?\n\nSmall MEMS accelerometer inside a wearable device\nMeasures acceleration by detecting motion and gravitational forces\nOutputs time-series data: raw acceleration signals"
+  },
+  {
+    "objectID": "001-intro.html#wrist-worn-vs.-hip-worn-accelerometers",
+    "href": "001-intro.html#wrist-worn-vs.-hip-worn-accelerometers",
+    "title": "Introduction to Accelerometer Data",
+    "section": "Wrist-Worn vs. Hip-Worn Accelerometers",
+    "text": "Wrist-Worn vs. Hip-Worn Accelerometers\n\n\n\n\n\n\n\n\nFeature\nWrist-Worn Devices\nHip-Worn Devices\n\n\n\n\nPlacement\nWorn on wrist\nAttached to belt\n\n\nCompliance\nHigher\nLower\n\n\nActivity Types\nCaptures arm movements\nBetter for whole-body movement"
+  },
+  {
+    "objectID": "001-intro.html#common-data-formats",
+    "href": "001-intro.html#common-data-formats",
+    "title": "Introduction to Accelerometer Data",
+    "section": "Common Data Formats",
+    "text": "Common Data Formats\n\nRaw Accelerometer Data (high-resolution time-series data)\nActivity Counts (aggregated over time windows)\nWear Time Detection (non-wear vs. wear periods)\nSteps (estimation of a “step”)"
+  },
+  {
+    "objectID": "001-intro.html#example-studies",
+    "href": "001-intro.html#example-studies",
+    "title": "Introduction to Accelerometer Data",
+    "section": "Example Studies",
+    "text": "Example Studies\n\nNHANES Accelerometry (CDC)\nLarge-scale population studies using wrist-worn devices\nReleased raw data - we released processed version\nUK Biobank Wearable Data\nOver 100,000 participants with 7-day wrist accelerometer recordings"
+  },
+  {
+    "objectID": "001-intro.html#technical-stuff-condaenvironments",
+    "href": "001-intro.html#technical-stuff-condaenvironments",
+    "title": "Introduction to Accelerometer Data",
+    "section": "Technical Stuff: Conda/Environments",
+    "text": "Technical Stuff: Conda/Environments\n\nIf using Python, you know conda\nIf using R, Python link using reticulate package\nMultiple conda environments may be needed\npackage/module A needs numpy &lt;= 2.11 and package B needs numpy 2.30\n“Switching” conda environments within a script/session is a hassle"
+  },
+  {
+    "objectID": "001-intro.html#brief-package-overview",
+    "href": "001-intro.html#brief-package-overview",
+    "title": "Introduction to Accelerometer Data",
+    "section": "Brief Package overview",
+    "text": "Brief Package overview\n\n\n\nread.gt3x - reads GT3X format CRAN/GitHub\nagcounts - on CRAN, wrapper of Python and other uses CRAN/GitHub\nactilifecounts - on CRAN, implements Activity Counts native in R CRAN/GitHub\nagcounter: direct wrapper of Python code (uses conda), but not on CRAN CRAN/GitHub\nGGIR - the firehose of outputs/GGIRread - reader CRAN/GitHub\nactigraph.sleepr - implements Choi/Troiano wear time methods CRAN/GitHub\n\n\n\nstepcount - implements stepcount algorithm from Oxford group CRAN/GitHub\nwalking - implements other walking/step estimation methods\nADEPT - walking segmentation\nMIMSunit - calculates MIMS units\nacc - explore accelerometer data\naccelerometry - functions for Processing Accelerometer Data\nSummarizedActigraphy - dumping ground for some functions we made"
+  },
+  {
+    "objectID": "001-intro.html#data",
+    "href": "001-intro.html#data",
+    "title": "Introduction to Accelerometer Data",
+    "section": "Data",
+    "text": "Data\n\nSingle file AI15_MOS2D09170398_2017-10-30.gt3x from Figshare repository\nFrom Chadwell et al. (2019a), which was released with the publication Chadwell et al. (2019b).\nStart with GT3X file - ActiGraph format\nWe can talk technical aspects of this binary file, but let’s just read it in"
+  },
+  {
+    "objectID": "001-intro.html#getting-data",
+    "href": "001-intro.html#getting-data",
+    "title": "Introduction to Accelerometer Data",
+    "section": "Getting Data",
+    "text": "Getting Data\n\ngt3x_file = here::here(\"data/AI15_MOS2D09170398_2017-10-30.gt3x\")\nif (!file.exists(gt3x_file)) {\n  url = paste0(\"https://github.com/jhuwit/\", \n               \"accel_in_r\", \n               \"/raw/main/\",\n               \"data/AI15_MOS2D09170398_2017-10-30.gt3x\")\n  curl::curl_download(url = url, destfile = gt3x_file)\n}"
+  },
+  {
+    "objectID": "001-intro.html#read-in-the-data",
+    "href": "001-intro.html#read-in-the-data",
+    "title": "Introduction to Accelerometer Data",
+    "section": "Read in the data",
+    "text": "Read in the data\n\nasDataFrame - make it a data.frame\nimputeZeroes - discuss idle sleep mode\n\n\nlibrary(read.gt3x)\n(df = read.gt3x::read.gt3x(path = gt3x_file, \n                           asDataFrame = TRUE, \n                           imputeZeroes = TRUE))\n\nSampling Rate: 30Hz\nFirmware Version: 1.9.2\nSerial Number Prefix: MOS\n                 time     X     Y      Z\n1 2017-10-30 15:00:00 0.188 0.145 -0.984\n2 2017-10-30 15:00:00 0.180 0.125 -0.988\n3 2017-10-30 15:00:00 0.184 0.121 -0.984\n4 2017-10-30 15:00:00 0.184 0.121 -0.992\n5 2017-10-30 15:00:00 0.184 0.117 -0.988\n6 2017-10-30 15:00:00 0.184 0.125 -0.988\n\n\n\nIdle sleep mode is a battery saving option when enabling and setting up ActiGraph devices. It’s a hassle, don’t use it unless you have to. It causes “gaps” in the GT3X file that are truly missing , but this is an issue with many processing methods (gaps), so you can “impute” zeroes into the data set, which aren’t correct either."
+  },
+  {
+    "objectID": "001-intro.html#where-are-the-subseconds",
+    "href": "001-intro.html#where-are-the-subseconds",
+    "title": "Introduction to Accelerometer Data",
+    "section": "Where are the subseconds?",
+    "text": "Where are the subseconds?\ndigits.secs - show a certain number of digits for seconds from time\n\n\n\ngetOption(\"digits.secs\")\n\n[1] 3\n\noptions(digits.secs = 3)\ndf\n\nSampling Rate: 30Hz\nFirmware Version: 1.9.2\nSerial Number Prefix: MOS\n                 time     X     Y      Z\n1 2017-10-30 15:00:00 0.188 0.145 -0.984\n2 2017-10-30 15:00:00 0.180 0.125 -0.988\n3 2017-10-30 15:00:00 0.184 0.121 -0.984\n4 2017-10-30 15:00:00 0.184 0.121 -0.992\n5 2017-10-30 15:00:00 0.184 0.117 -0.988\n6 2017-10-30 15:00:00 0.184 0.125 -0.988\n\n\n\n\noptions(digits.secs = 3)\nas_tibble(df)\n\n# A tibble: 18,144,000 × 4\n   time                        X     Y      Z\n   &lt;dttm&gt;                  &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;\n 1 2017-10-30 15:00:00.000 0.188 0.145 -0.984\n 2 2017-10-30 15:00:00.033 0.18  0.125 -0.988\n 3 2017-10-30 15:00:00.066 0.184 0.121 -0.984\n 4 2017-10-30 15:00:00.099 0.184 0.121 -0.992\n 5 2017-10-30 15:00:00.133 0.184 0.117 -0.988\n 6 2017-10-30 15:00:00.166 0.184 0.125 -0.988\n 7 2017-10-30 15:00:00.200 0.18  0.125 -0.988\n 8 2017-10-30 15:00:00.233 0.176 0.121 -0.992\n 9 2017-10-30 15:00:00.266 0.184 0.121 -0.984\n10 2017-10-30 15:00:00.299 0.18  0.121 -0.992\n# ℹ 18,143,990 more rows"
+  },
+  {
+    "objectID": "001-intro.html#time-is-not-your-friend",
+    "href": "001-intro.html#time-is-not-your-friend",
+    "title": "Introduction to Accelerometer Data",
+    "section": "Time is not your friend",
+    "text": "Time is not your friend\n\nTime zones are hell\n\n\nlubridate::tz(df$time)\n\n[1] \"GMT\""
+  },
+  {
+    "objectID": "001-intro.html#header---in-the-attributes",
+    "href": "001-intro.html#header---in-the-attributes",
+    "title": "Introduction to Accelerometer Data",
+    "section": "Header - in the attributes",
+    "text": "Header - in the attributes\nThe format of df is a activity_df, which is why you see the header information, but you need to know how to extract these:\n\n\n\nacceleration_max useful for MIMSunit\n\n\nnames(attributes(df))\n\n [1] \"names\"            \"row.names\"        \"class\"            \"subject_name\"    \n [5] \"time_zone\"        \"missingness\"      \"old_version\"      \"firmware\"        \n [9] \"last_sample_time\" \"serial_prefix\"    \"sample_rate\"      \"acceleration_min\"\n[13] \"acceleration_max\" \"header\"           \"start_time\"       \"stop_time\"       \n[17] \"total_records\"    \"bad_samples\"      \"features\"        \n\nattr(df, \"sample_rate\")\n\n[1] 30\n\nattr(df, \"acceleration_max\")\n\n[1] \"8.0\"\n\nattr(df, \"time_zone\")\n\n[1] \"00:00:00\"\n\n\n\n\nattr(df, \"header\")\n\nGT3X information\n $ Serial Number     :\"MOS2D09170398\"\n $ Device Type       :\"wGT3XBT\"\n $ Firmware          :\"1.9.2\"\n $ Battery Voltage   :\"3.94\"\n $ Sample Rate       :30\n $ Start Date        : POSIXct, format: \"2017-10-30 15:00:00\"\n $ Stop Date         : POSIXct, format: \"2017-11-06 15:00:00\"\n $ Last Sample Time  : POSIXct, format: \"2017-11-06 15:00:00\"\n $ TimeZone          :\"00:00:00\"\n $ Download Date     : POSIXct, format: \"2017-11-16 21:14:02\"\n $ Board Revision    :\"4\"\n $ Unexpected Resets :\"0\"\n $ Acceleration Scale:256\n $ Acceleration Min  :\"-8.0\"\n $ Acceleration Max  :\"8.0\"\n $ Limb              :\"Wrist\"\n $ Side              :\"Left\"\n $ Dominance         :\"Non-Dominant\"\n $ Subject Name      :\"H14\"\n $ Serial Prefix     :\"MOS\""
+  },
+  {
+    "objectID": "001-intro.html#zeroes",
+    "href": "001-intro.html#zeroes",
+    "title": "Introduction to Accelerometer Data",
+    "section": "Zeroes",
+    "text": "Zeroes\n\nAgain, these zeroes are not “real” zeroes”\n\n\nlibrary(dplyr)\ndf %&gt;% filter(X == 0, Y == 0, Z == 0)\n\nSampling Rate: 30Hz\nFirmware Version: 1.9.2\nSerial Number Prefix: MOS\n                 time X Y Z\n1 2017-10-30 15:00:22 0 0 0\n2 2017-10-30 15:00:22 0 0 0\n3 2017-10-30 15:00:22 0 0 0\n4 2017-10-30 15:00:22 0 0 0\n5 2017-10-30 15:00:22 0 0 0\n6 2017-10-30 15:00:22 0 0 0"
+  },
+  {
+    "objectID": "001-intro.html#fill-zeros---using-locf",
+    "href": "001-intro.html#fill-zeros---using-locf",
+    "title": "Introduction to Accelerometer Data",
+    "section": "Fill Zeros - using LOCF",
+    "text": "Fill Zeros - using LOCF\n\n\n\nFill these in using last observation carried forward (LOCF)\nWhat ActiLife does\nRespects a zero variance for previous values\n\n\n\nsample_rate = attr(df, \"sample_rate\")\nacceleration_max = as.numeric(attr(df, \"acceleration_max\"))\ndf_zeros = df = dplyr::as_tibble(df)\ndf = df %&gt;% \n  # find where all zeroes/imputed zeroes\n  mutate(all_zero = X == 0 & Y == 0 & Z == 0) %&gt;% \n  # replace all 0 with NA so it can be filled  \n  mutate(\n    X = ifelse(all_zero, NA_real_, X),\n    Y = ifelse(all_zero, NA_real_, Y),\n    Z = ifelse(all_zero, NA_real_, Z)\n  )\ndf = df %&gt;% \n  # last observation carried forward\n  tidyr::fill(X, Y, Z, .direction = \"down\")\nhead(df %&gt;% filter(all_zero | dplyr::lead(all_zero, default = FALSE)))\n\n# A tibble: 6 × 5\n  time                    X     Y      Z all_zero\n  &lt;dttm&gt;              &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt; &lt;lgl&gt;   \n1 2017-10-30 15:00:21  0.25 0.078 -0.984 FALSE   \n2 2017-10-30 15:00:22  0.25 0.078 -0.984 TRUE    \n3 2017-10-30 15:00:22  0.25 0.078 -0.984 TRUE    \n4 2017-10-30 15:00:22  0.25 0.078 -0.984 TRUE    \n5 2017-10-30 15:00:22  0.25 0.078 -0.984 TRUE    \n6 2017-10-30 15:00:22  0.25 0.078 -0.984 TRUE"
+  },
+  {
+    "objectID": "001-intro.html#remove-that-column",
+    "href": "001-intro.html#remove-that-column",
+    "title": "Introduction to Accelerometer Data",
+    "section": "Remove that Column",
+    "text": "Remove that Column\n\ndf = df %&gt;% \n  select(-all_zero)"
+  },
+  {
+    "objectID": "001-intro.html#reshaping-raw-data-for-ggplot2",
+    "href": "001-intro.html#reshaping-raw-data-for-ggplot2",
+    "title": "Introduction to Accelerometer Data",
+    "section": "Reshaping Raw Data for ggplot2",
+    "text": "Reshaping Raw Data for ggplot2\n\nlong = df %&gt;% \n  tidyr::pivot_longer(cols = c(X, Y, Z), \n                      names_to = \"axis\", \n                      values_to = \"acceleration\")\nhead(long)\n\n# A tibble: 6 × 3\n  time                axis  acceleration\n  &lt;dttm&gt;              &lt;chr&gt;        &lt;dbl&gt;\n1 2017-10-30 15:00:00 X            0.188\n2 2017-10-30 15:00:00 Y            0.145\n3 2017-10-30 15:00:00 Z           -0.984\n4 2017-10-30 15:00:00 X            0.18 \n5 2017-10-30 15:00:00 Y            0.125\n6 2017-10-30 15:00:00 Z           -0.988\n\n\nLots of data:\n\nlong %&gt;% \n  count(axis)\n\n# A tibble: 3 × 2\n  axis         n\n  &lt;chr&gt;    &lt;int&gt;\n1 X     18144000\n2 Y     18144000\n3 Z     18144000"
+  },
+  {
+    "objectID": "001-intro.html#plot-first-5-minutes-30hz-dense",
+    "href": "001-intro.html#plot-first-5-minutes-30hz-dense",
+    "title": "Introduction to Accelerometer Data",
+    "section": "Plot First 5 minutes (30Hz dense)",
+    "text": "Plot First 5 minutes (30Hz dense)\n\nlibrary(ggplot2); library(lubridate)\n(qp = long %&gt;% \n    filter(between(time, floor_date(time[1]), \n                   floor_date(time[1]) + as.period(5, \"minutes\"))) %&gt;% \n    ggplot(aes(x = time, y = acceleration, colour = axis)) + \n    geom_rect(aes(xmin = ymd_hms(\"2017-10-30 15:00:22\"),\n                  xmax = ymd_hms(\"2017-10-30 15:00:37\"),\n                  ymin = -Inf,\n                  ymax = Inf), fill = 'pink', alpha = 0.05) + \n    geom_line())"
+  },
+  {
+    "objectID": "001-intro.html#plot-first-5-minutes-30hz-dense-1",
+    "href": "001-intro.html#plot-first-5-minutes-30hz-dense-1",
+    "title": "Introduction to Accelerometer Data",
+    "section": "Plot First 5 minutes (30Hz dense)",
+    "text": "Plot First 5 minutes (30Hz dense)\n\nlibrary(ggplot2); library(lubridate)\n(qp = long %&gt;% \n    filter(between(time, floor_date(time[1]), \n                   floor_date(time[1]) + as.period(5, \"minutes\"))) %&gt;% \n    ggplot(aes(x = time, y = acceleration, colour = axis)) + \n    geom_rect(aes(xmin = ymd_hms(\"2017-10-30 15:00:22\"),\n                  xmax = ymd_hms(\"2017-10-30 15:00:37\"),\n                  ymin = -Inf,\n                  ymax = Inf), fill = 'pink', alpha = 0.05) + \n    geom_line())"
+  },
+  {
+    "objectID": "001-intro.html#same-plot-without-zeroes",
+    "href": "001-intro.html#same-plot-without-zeroes",
+    "title": "Introduction to Accelerometer Data",
+    "section": "Same Plot without Zeroes",
+    "text": "Same Plot without Zeroes"
+  },
+  {
+    "objectID": "001-intro.html#time-data-is-not-your-friend",
+    "href": "001-intro.html#time-data-is-not-your-friend",
+    "title": "Introduction to Accelerometer Data",
+    "section": "Time (data) is not your friend",
+    "text": "Time (data) is not your friend\n\nTime zones are hell\n\n\nlubridate::tz(df$time)\n\n[1] \"GMT\"\n\n\n\nread.gt3x attached a GMT timezone to the data, but there is a note\n\n\n\n“local” means local to the device/initialization, not your machine"
+  },
+  {
+    "objectID": "001-intro.html#same-plot-with-zeroes",
+    "href": "001-intro.html#same-plot-with-zeroes",
+    "title": "Introduction to Accelerometer Data",
+    "section": "Same Plot with Zeroes",
+    "text": "Same Plot with Zeroes"
+  },
+  {
+    "objectID": "001-intro.html#plot-all-data",
+    "href": "001-intro.html#plot-all-data",
+    "title": "Introduction to Accelerometer Data",
+    "section": "Plot all data",
+    "text": "Plot all data\n\nCreating separate date and time useful for plotting/summary\n\n\n(long = long %&gt;% \n   mutate(date = as_date(time),\n          hourtime = hms::as_hms(time)))\n\n\n\n# A tibble: 10 × 5\n   time                axis  acceleration date       hourtime       \n   &lt;dttm&gt;              &lt;chr&gt;        &lt;dbl&gt; &lt;date&gt;     &lt;time&gt;         \n 1 2017-10-30 15:00:00 X            0.188 2017-10-30 15:00:00.000000\n 2 2017-10-30 15:00:00 Y            0.145 2017-10-30 15:00:00.000000\n 3 2017-10-30 15:00:00 Z           -0.984 2017-10-30 15:00:00.000000\n 4 2017-10-30 15:00:00 X            0.18  2017-10-30 15:00:00.033333\n 5 2017-10-30 15:00:00 Y            0.125 2017-10-30 15:00:00.033333\n 6 2017-10-30 15:00:00 Z           -0.988 2017-10-30 15:00:00.033333\n 7 2017-10-30 15:00:00 X            0.184 2017-10-30 15:00:00.066667\n 8 2017-10-30 15:00:00 Y            0.121 2017-10-30 15:00:00.066667\n 9 2017-10-30 15:00:00 Z           -0.984 2017-10-30 15:00:00.066667\n10 2017-10-30 15:00:00 X            0.184 2017-10-30 15:00:00.100000"
   }
 ]
