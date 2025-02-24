@@ -81,6 +81,12 @@ Timestamp                  X        Y        Z
 - **Wear Time Detection** (non-wear vs. wear periods)
 - **Steps** (estimation of a "step")
 
+```{r silly_walks}
+#| echo: false
+knitr::include_graphics(here::here("images/silly_walks.gif"))
+```
+
+
 ---
 
 ## Example Studies
@@ -360,8 +366,7 @@ library(ggplot2); library(lubridate)
     ggplot(aes(x = time, y = acceleration, colour = axis)) + 
     geom_rect(aes(xmin = ymd_hms("2017-10-30 15:00:22"),
                   xmax = ymd_hms("2017-10-30 15:00:37"),
-                  ymin = -Inf,
-                  ymax = Inf), fill = 'pink', alpha = 0.05) + 
+                  ymin = -Inf, ymax = Inf), fill = 'pink', alpha = 0.05) + 
     geom_line())
 ```
 
@@ -378,8 +383,7 @@ library(ggplot2); library(lubridate)
    ggplot(aes(x = time, y = acceleration, colour = axis)) + 
    geom_rect(aes(xmin = ymd_hms("2017-10-30 15:00:22"),
                  xmax = ymd_hms("2017-10-30 15:00:37"),
-                 ymin = -Inf,
-                 ymax = Inf), fill = 'pink', alpha = 0.05) + 
+                 ymin = -Inf, ymax = Inf), fill = 'pink', alpha = 0.05) + 
    geom_line())
 ```
 
@@ -453,7 +457,7 @@ long %>%
              colour = axis)) + 
   facet_wrap(~ date, ncol = 2) + 
   geom_step() + 
-  theme(colour = guide_legend(position = "bottom"))
+  guides(colour = guide_legend(position = "bottom"))
 ```
 
 :::
@@ -463,7 +467,7 @@ long %>%
 
 ```{r run_second_bigplot_show}
 #| fig-height: 5
-#| fig-width: 5
+#| fig-width: 8
 #| echo: false
 #| dependson: run_second_bigplot
 <<run_second_bigplot>>
@@ -559,7 +563,7 @@ ac60 %>%
 #| dependson: plot_ac60_show
 #| echo: false
 #| out-width: "100%"
-<<run_second_bigplot>>
+<<plot_ac60_show>>
 ```
 
 :::
@@ -707,6 +711,9 @@ If no model is specified, the model is downloaded to a temporary directory, but 
 
 ## Step Counts
 
+:::: {.columns}
+
+::: {.column width="50%"}
 
 The output of `stepcount` is a list of different pieces of information, including information about the device:
 
@@ -714,7 +721,11 @@ The output of `stepcount` is a list of different pieces of information, includin
 names(sc)
 ```
 
-but the main elements of interest are the `data.frame` of estimated steps, which has the associated timestamps:
+:::
+
+::: {.column width="50%"}
+
+The main elements of interest are the `data.frame` of estimated steps, which has the associated timestamps:
 
 ```{r stepcount_steps}
 head(sc$steps)
@@ -725,6 +736,9 @@ and similarly a `data.frame` of flagged time for walking:
 ```{r stepcount_walking}
 head(sc$walking)
 ```
+
+:::
+::::
 
 ## Step Counts Aggregation
 
@@ -738,6 +752,34 @@ sc60 = sc$steps %>%
 head(sc60)
 ```
 
+## Steps Per Minute
+
+:::: {.columns}
+
+::: {.column width="30%"}
+
+```{r plot_sc60_show}
+#| eval: false
+sc60 %>% 
+  mutate(date = lubridate::as_date(time),
+         hourtime = hms::as_hms(time)) %>% 
+  ggplot(aes(x = hourtime, y = steps)) + 
+  geom_step() +
+  facet_wrap(~ date, ncol = 1)
+```
+
+:::
+::: {.column width="70%"}
+
+```{r plot_sc60}
+#| dependson: plot_sc60_show
+#| echo: false
+#| out-width: "100%"
+<<plot_sc60_show>>
+```
+
+:::
+::::
 
 ## Not Discussed
 
@@ -745,5 +787,6 @@ head(sc60)
 - MVPA/Thresholds
 - Sedentary time
 - Sleep estimation
+- Population analysis/Lasagna plots
 
 # References

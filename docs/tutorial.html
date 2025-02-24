@@ -510,7 +510,8 @@ John Muschelli and Lily Koffman
 <li><strong>Wear Time Detection</strong> (non-wear vs.&nbsp;wear periods)</li>
 <li><strong>Steps</strong> (estimation of a “step”)</li>
 </ul>
-</section>
+
+<img data-src="images/silly_walks.gif" class="r-stretch"></section>
 <section id="example-studies" class="slide level2">
 <h2>Example Studies</h2>
 <ul>
@@ -881,9 +882,8 @@ Serial Number Prefix: MOS
 <span id="cb34-5"><a></a>    <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> time, <span class="at">y =</span> acceleration, <span class="at">colour =</span> axis)) <span class="sc">+</span> </span>
 <span id="cb34-6"><a></a>    <span class="fu">geom_rect</span>(<span class="fu">aes</span>(<span class="at">xmin =</span> <span class="fu">ymd_hms</span>(<span class="st">"2017-10-30 15:00:22"</span>),</span>
 <span id="cb34-7"><a></a>                  <span class="at">xmax =</span> <span class="fu">ymd_hms</span>(<span class="st">"2017-10-30 15:00:37"</span>),</span>
-<span id="cb34-8"><a></a>                  <span class="at">ymin =</span> <span class="sc">-</span><span class="cn">Inf</span>,</span>
-<span id="cb34-9"><a></a>                  <span class="at">ymax =</span> <span class="cn">Inf</span>), <span class="at">fill =</span> <span class="st">'pink'</span>, <span class="at">alpha =</span> <span class="fl">0.05</span>) <span class="sc">+</span> </span>
-<span id="cb34-10"><a></a>    <span class="fu">geom_line</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb34-8"><a></a>                  <span class="at">ymin =</span> <span class="sc">-</span><span class="cn">Inf</span>, <span class="at">ymax =</span> <span class="cn">Inf</span>), <span class="at">fill =</span> <span class="st">'pink'</span>, <span class="at">alpha =</span> <span class="fl">0.05</span>) <span class="sc">+</span> </span>
+<span id="cb34-9"><a></a>    <span class="fu">geom_line</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 
 </div>
 <img data-src="tutorial_files/figure-revealjs/quickplot-1.png" width="960" class="r-stretch"></section>
@@ -965,14 +965,14 @@ Serial Number Prefix: MOS
 <span id="cb38-11"><a></a>             <span class="at">colour =</span> axis)) <span class="sc">+</span> </span>
 <span id="cb38-12"><a></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> date, <span class="at">ncol =</span> <span class="dv">2</span>) <span class="sc">+</span> </span>
 <span id="cb38-13"><a></a>  <span class="fu">geom_step</span>() <span class="sc">+</span> </span>
-<span id="cb38-14"><a></a>  <span class="fu">theme</span>(<span class="at">colour =</span> <span class="fu">guide_legend</span>(<span class="at">position =</span> <span class="st">"bottom"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb38-14"><a></a>  <span class="fu">guides</span>(<span class="at">colour =</span> <span class="fu">guide_legend</span>(<span class="at">position =</span> <span class="st">"bottom"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div><div class="column" style="width:60%;">
 <div class="cell">
 <div class="cell-output-display">
 <div>
 <figure>
-<p><img data-src="tutorial_files/figure-revealjs/run_second_bigplot_show-1.png" width="480"></p>
+<p><img data-src="tutorial_files/figure-revealjs/run_second_bigplot_show-1.png" width="768"></p>
 </figure>
 </div>
 </div>
@@ -1229,6 +1229,8 @@ $offset
 </section>
 <section id="step-counts-1" class="slide level2">
 <h2>Step Counts</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
 <p>The output of <code>stepcount</code> is a list of different pieces of information, including information about the device:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb64"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a></a><span class="fu">names</span>(sc)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -1236,7 +1238,8 @@ $offset
 <pre><code>[1] "steps"      "walking"    "step_times" "info"      </code></pre>
 </div>
 </div>
-<p>but the main elements of interest are the <code>data.frame</code> of estimated steps, which has the associated timestamps:</p>
+</div><div class="column" style="width:50%;">
+<p>The main elements of interest are the <code>data.frame</code> of estimated steps, which has the associated timestamps:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb66"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a></a><span class="fu">head</span>(sc<span class="sc">$</span>steps)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -1266,6 +1269,7 @@ $offset
 6 2017-10-30 15:00:50.000       0</code></pre>
 </div>
 </div>
+</div></div>
 </section>
 <section id="step-counts-aggregation" class="slide level2">
 <h2>Step Counts Aggregation</h2>
@@ -1289,6 +1293,30 @@ $offset
 </div>
 </div>
 </section>
+<section id="steps-per-minute" class="slide level2">
+<h2>Steps Per Minute</h2>
+<div class="columns">
+<div class="column" style="width:30%;">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb72"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a></a>sc60 <span class="sc">%&gt;%</span> </span>
+<span id="cb72-2"><a></a>  <span class="fu">mutate</span>(<span class="at">date =</span> lubridate<span class="sc">::</span><span class="fu">as_date</span>(time),</span>
+<span id="cb72-3"><a></a>         <span class="at">hourtime =</span> hms<span class="sc">::</span><span class="fu">as_hms</span>(time)) <span class="sc">%&gt;%</span> </span>
+<span id="cb72-4"><a></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> hourtime, <span class="at">y =</span> steps)) <span class="sc">+</span> </span>
+<span id="cb72-5"><a></a>  <span class="fu">geom_step</span>() <span class="sc">+</span></span>
+<span id="cb72-6"><a></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> date, <span class="at">ncol =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div><div class="column" style="width:70%;">
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure>
+<p><img data-src="tutorial_files/figure-revealjs/plot_sc60-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+</div></div>
+</section>
 <section id="not-discussed" class="slide level2">
 <h2>Not Discussed</h2>
 <ul>
@@ -1296,6 +1324,7 @@ $offset
 <li>MVPA/Thresholds</li>
 <li>Sedentary time</li>
 <li>Sleep estimation</li>
+<li>Population analysis/Lasagna plots</li>
 </ul>
 </section></section>
 <section id="references" class="title-slide slide level1 smaller scrollable">
