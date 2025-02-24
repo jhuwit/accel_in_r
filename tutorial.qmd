@@ -83,6 +83,7 @@ Timestamp                  X        Y        Z
 
 ```{r silly_walks}
 #| echo: false
+#| height: 400px
 knitr::include_graphics(here::here("images/silly_walks.gif"))
 ```
 
@@ -254,7 +255,7 @@ attr(df, "header")
 :::
 ::::
 
-# Important - save attributes if converting to `data.frame`/`tibble`
+# Important - save attributes if convert to `data.frame`/`tibble`
 
 ## Zeroes
 
@@ -425,7 +426,7 @@ long %>%
 
 ::: {.column width="60%"}
 
-```{r show_bigplot, out.height="50%"}
+```{r show_bigplot, out.height="25%"}
 #| echo: false
 knitr::include_graphics(here::here("images/bigplot.png"))
 ```
@@ -457,6 +458,7 @@ long %>%
              colour = axis)) + 
   facet_wrap(~ date, ncol = 2) + 
   geom_step() + 
+  theme(text = element_text(size = 15)) + 
   guides(colour = guide_legend(position = "bottom"))
 ```
 
@@ -466,8 +468,8 @@ long %>%
 ::: {.column width="60%"}
 
 ```{r run_second_bigplot_show}
-#| fig-height: 5
-#| fig-width: 8
+#| fig-height: 10
+#| fig-width: 10
 #| echo: false
 #| dependson: run_second_bigplot
 <<run_second_bigplot>>
@@ -512,7 +514,7 @@ df_calibrated[, c("X", "Y", "Z")] = scale(
   scale = 1/calibration_params$scale)
 ```
 
-## Note on Idle Sleep Mode and Gravity Correction
+## Idle Sleep Mode & Gravity Correction
 In the `GGIR` code [g.calibrate calls g.readaccfile](https://github.com/wadpac/GGIR/blob/9c7e794de27380b801451a2d889e6d4ca0677313/R/g.calibrate.R#L105) and if we look deeper, it [reads in the data using `read.gt3x::read.gt3x`](https://github.com/wadpac/GGIR/blob/9c7e794de27380b801451a2d889e6d4ca0677313/R/g.readaccfile.R#L275), **but with the default of `imputeZeroes = FALSE`**.  That means that the calibration does not use any idle sleep mode data for estimation.  
 
 Thus, if we have read in the data and performed operations and then want to perform gravity calibration, we have a few options:
@@ -522,7 +524,7 @@ Thus, if we have read in the data and performed operations and then want to perf
 3) Pass the data to `agcounts::agcalibrate`.
 We recommend not using imputed zeroes, or fixed zeroes to estimate calibration parameters as it may bias the calibration parameters. 
 
-# We're not using calibrated data here
+# We're not using calibrated data
 
 ## Creating Activity Counts {#sec-create-ac-nonwear}
 
@@ -542,9 +544,6 @@ head(ac60)
 
 ## Plotting Activity Counts
 
-:::: {.columns}
-
-::: {.column width="30%"}
 
 ```{r plot_ac60_show}
 #| eval: false
@@ -556,9 +555,6 @@ ac60 %>%
   facet_wrap(~ date, ncol = 1)  
 ```
 
-:::
-::: {.column width="70%"}
-
 ```{r plot_ac60}
 #| dependson: plot_ac60_show
 #| echo: false
@@ -566,8 +562,6 @@ ac60 %>%
 <<plot_ac60_show>>
 ```
 
-:::
-::::
 
 ## Non-wear Detection
 
@@ -578,11 +572,11 @@ From @knaier2019validation, they describe:
 >  "Troiano" defines non-wear time as intervals of at least 60 consecutive minutes of zero activity counts, allowing for up to two consecutive minutes of counts between 1 and 100 counts. The algorithm "Choi" defines non-wear times as periods of consecutive 0-counts of a certain duration. This duration is defined as “minimum length of non-wear times”. The default setting by the manufacturer is 90 min. 
 
 
-These methods have been implemented in the `actigraph.sleepr` package.  But first we will create activity counts.
+These methods have been implemented in the `actigraph.sleepr` package.  
 
 ## Estimating Non-wear Minutes
 
-From this minute-level activity counts data, we can run the Choi algorithm.  First, we must rename the `time` column to `timestamp` and replace the columns with their lowercase counterpart:
+Rename the `time` column to `timestamp` and replace the columns with their lowercase counterpart for `actigraph.sleepr`:
 
 
 ```{r choi_data}
@@ -606,7 +600,7 @@ choi_nonwear = actigraph.sleepr::apply_choi(data, use_magnitude = TRUE)
 head(choi_nonwear)
 ```
 
-### Estimating Non-wear Minutes
+## Estimating Non-wear Minutes
 
 - We can transform this to be seconds instead of current bout format:
 
@@ -625,7 +619,7 @@ data %>%
 ```
 
 
-### Plotting Non-wear
+## Plotting Non-wear
 
 
 Overall, this looks like relatively clean data, but there are some segments (e.g. 2017-11-01 at 20:00) that may be misclassified.
@@ -647,14 +641,23 @@ plot_data = data %>%
 
 
 
-## Monitor-Independent Movement Summary (MIMS) Units {#sec-mims}
-[`MIMSunit`](https://github.com/mhealthgroup/mimsunit) package - calculate MIMS unit [@mims]:
+## MIMS Units 
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+[`MIMSunit`](https://github.com/mhealthgroup/mimsunit) package - calculate Monitor-Independent Movement Summary unit [@mims]:
+
  - interpolation of the signal to 100Hz, 
- - extrapolate signal for regions that have hit the maximum/minimum acceleration units for the devic
+ - extrapolate signal for regions that have hit the maximum/minimum acceleration units for the device
  - band-pass filter from 0.2 to 5Hz,
  - absolute value of the area under the curve (AUC) using a trapezoidal rule, 
  - truncates low signal values to $0$.
 
+:::
+
+::: {.column width="50%"}
 You may need to rename the `time` column to `HEADER_TIME_STAMP` for MIMS units depending on the version of the package:
 
 ```{r calculate_mims}
@@ -671,6 +674,14 @@ mims = readr::read_rds(here::here("data/mims.rds"))
 head(mims)
 ```
 
+```{r plot_mims}
+#| echo: false
+mims %>% 
+  ggplot(aes(x = MIMS_UNIT)) + geom_histogram() + xlab("MIMS (per minute)")
+```
+
+:::
+:::: 
 
 ## Compare MIMS and AC 
 
@@ -688,13 +699,10 @@ joined %>%
 
 ## Step Counts
 
-We can load the environment as follows:
-```{r}
-#| eval: false
-stepcount::use_stepcount_condaenv()
-```
+Open source method for estimating stepcounts: https://github.com/OxWearables/stepcount [@stepcount], ported using `reticulate`. 
 
-The model has options to speed up operations using GPU (vs. CPU) processing, but can run relatively quickly on individual data and can be parallelized for each subject:
+Must load module and then run (can use GPU):
+
 ```{r code_stepcount}
 #| eval: false
 stepcount::unset_reticulate_python()
@@ -707,7 +715,7 @@ sc = stepcount::stepcount(df, sample_rate = sample_rate, model_type = "ssl")
 sc = readr::read_rds(here::here("data/stepcount.rds"))
 ```
 
-If no model is specified, the model is downloaded to a temporary directory, but users can use the `stepcount::sc_download_model` function to download the model file, store it, and pass it via the `model_path` argument.  We can also pass in a vector of file names or a list of `data.frame`s to run this procedure for multiple data sets while only loading the model once.
+If no model is specified, the model is downloaded to a temporary directory, but users can use the `stepcount::sc_download_model` function to download the model file, store it, and pass it via the `model_path` argument. 
 
 ## Step Counts
 
@@ -721,20 +729,27 @@ The output of `stepcount` is a list of different pieces of information, includin
 names(sc)
 ```
 
+A `data.frame` of flags for walking:
+
+```{r stepcount_walking}
+head(sc$walking)
+```
+
+
 :::
 
 ::: {.column width="50%"}
 
-The main elements of interest are the `data.frame` of estimated steps, which has the associated timestamps:
+The main output of interest: `data.frame` of estimated steps:
 
 ```{r stepcount_steps}
 head(sc$steps)
 ```
 
-and similarly a `data.frame` of flagged time for walking:
-
-```{r stepcount_walking}
-head(sc$walking)
+```{r plot_steps}
+#| echo: false
+sc$steps %>% 
+  ggplot(aes(x = steps)) + geom_histogram() + xlab("Number of Steps in 10s")
 ```
 
 :::
@@ -754,9 +769,6 @@ head(sc60)
 
 ## Steps Per Minute
 
-:::: {.columns}
-
-::: {.column width="30%"}
 
 ```{r plot_sc60_show}
 #| eval: false
@@ -768,8 +780,6 @@ sc60 %>%
   facet_wrap(~ date, ncol = 1)
 ```
 
-:::
-::: {.column width="70%"}
 
 ```{r plot_sc60}
 #| dependson: plot_sc60_show
@@ -778,8 +788,48 @@ sc60 %>%
 <<plot_sc60_show>>
 ```
 
+
+## Steps vs AC
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+
+```{r plot_ac60_2}
+#| dependson: plot_ac60_show
+#| echo: false
+#| out-width: "100%"
+#| fig-height: 10
+#| fig-width: 5
+<<plot_ac60_show>>
+```
+
+:::
+
+::: {.column width="50%"}
+
+
+```{r plot_sc60_2}
+#| dependson: plot_sc60_show
+#| echo: false
+#| out-width: "100%"
+#| fig-height: 10
+#| fig-width: 5
+<<plot_sc60_show>>
+```
+
 :::
 ::::
+
+## Conclusions
+
+- Can go from Raw Data to Counts/Steps
+- Wear time can be done using counts even if not using them (doesn't catch everything)
+- Need better quick plots for 1000s of participants
+- A number of other metrics exist
+- Can embarrassingly parallelize the processing
+- We give NHANES derivatives
 
 ## Not Discussed
 

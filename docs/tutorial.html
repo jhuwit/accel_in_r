@@ -11,7 +11,7 @@
   <meta name="generator" content="quarto-1.5.57">
 
   <meta name="author" content="John Muschelli and Lily Koffman">
-  <title>Accelerometry Analysis and Processing in R – Introduction to Accelerometer Data</title>
+  <title>Accelerometry in R – Introduction to Accelerometer Data</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
@@ -746,8 +746,8 @@ Serial Number Prefix: MOS
 </div></div>
 </section>
 <section>
-<section id="important---save-attributes-if-converting-to-data.frametibble" class="title-slide slide level1 center">
-<h1>Important - save attributes if converting to <code>data.frame</code>/<code>tibble</code></h1>
+<section id="important---save-attributes-if-convert-to-data.frametibble" class="title-slide slide level1 center">
+<h1>Important - save attributes if convert to <code>data.frame</code>/<code>tibble</code></h1>
 
 </section>
 <section id="zeroes" class="slide level2">
@@ -939,7 +939,7 @@ Serial Number Prefix: MOS
 <div class="cell-output-display">
 <div>
 <figure>
-<p><img data-src="images/bigplot.png" style="height:50.0%" width="750"></p>
+<p><img data-src="images/bigplot.png" style="height:25.0%" width="750"></p>
 </figure>
 </div>
 </div>
@@ -965,14 +965,15 @@ Serial Number Prefix: MOS
 <span id="cb38-11"><a></a>             <span class="at">colour =</span> axis)) <span class="sc">+</span> </span>
 <span id="cb38-12"><a></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> date, <span class="at">ncol =</span> <span class="dv">2</span>) <span class="sc">+</span> </span>
 <span id="cb38-13"><a></a>  <span class="fu">geom_step</span>() <span class="sc">+</span> </span>
-<span id="cb38-14"><a></a>  <span class="fu">guides</span>(<span class="at">colour =</span> <span class="fu">guide_legend</span>(<span class="at">position =</span> <span class="st">"bottom"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb38-14"><a></a>  <span class="fu">theme</span>(<span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">15</span>)) <span class="sc">+</span> </span>
+<span id="cb38-15"><a></a>  <span class="fu">guides</span>(<span class="at">colour =</span> <span class="fu">guide_legend</span>(<span class="at">position =</span> <span class="st">"bottom"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div><div class="column" style="width:60%;">
 <div class="cell">
 <div class="cell-output-display">
 <div>
 <figure>
-<p><img data-src="tutorial_files/figure-revealjs/run_second_bigplot_show-1.png" width="768"></p>
+<p><img data-src="tutorial_files/figure-revealjs/run_second_bigplot_show-1.png" width="960"></p>
 </figure>
 </div>
 </div>
@@ -1022,8 +1023,8 @@ $offset
 <span id="cb43-5"><a></a>  <span class="at">scale =</span> <span class="dv">1</span><span class="sc">/</span>calibration_params<span class="sc">$</span>scale)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="note-on-idle-sleep-mode-and-gravity-correction" class="slide level2">
-<h2>Note on Idle Sleep Mode and Gravity Correction</h2>
+<section id="idle-sleep-mode-gravity-correction" class="slide level2">
+<h2>Idle Sleep Mode &amp; Gravity Correction</h2>
 <p>In the <code>GGIR</code> code <a href="https://github.com/wadpac/GGIR/blob/9c7e794de27380b801451a2d889e6d4ca0677313/R/g.calibrate.R#L105">g.calibrate calls g.readaccfile</a> and if we look deeper, it <a href="https://github.com/wadpac/GGIR/blob/9c7e794de27380b801451a2d889e6d4ca0677313/R/g.readaccfile.R#L275">reads in the data using <code>read.gt3x::read.gt3x</code></a>, <strong>but with the default of <code>imputeZeroes = FALSE</code></strong>. That means that the calibration does not use any idle sleep mode data for estimation.</p>
 <p>Thus, if we have read in the data and performed operations and then want to perform gravity calibration, we have a few options:</p>
 <ol type="1">
@@ -1033,8 +1034,8 @@ $offset
 </ol>
 </section></section>
 <section>
-<section id="were-not-using-calibrated-data-here" class="title-slide slide level1 center">
-<h1>We’re not using calibrated data here</h1>
+<section id="were-not-using-calibrated-data" class="title-slide slide level1 center">
+<h1>We’re not using calibrated data</h1>
 
 </section>
 <section id="sec-create-ac-nonwear" class="slide level2">
@@ -1065,8 +1066,6 @@ $offset
 </section>
 <section id="plotting-activity-counts" class="slide level2">
 <h2>Plotting Activity Counts</h2>
-<div class="columns">
-<div class="column" style="width:30%;">
 <div class="cell">
 <div class="sourceCode cell-code" id="cb46"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a></a>ac60 <span class="sc">%&gt;%</span> </span>
 <span id="cb46-2"><a></a>  <span class="fu">mutate</span>(<span class="at">date =</span> lubridate<span class="sc">::</span><span class="fu">as_date</span>(time),</span>
@@ -1075,18 +1074,8 @@ $offset
 <span id="cb46-5"><a></a>  <span class="fu">geom_step</span>() <span class="sc">+</span></span>
 <span id="cb46-6"><a></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> date, <span class="at">ncol =</span> <span class="dv">1</span>)  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-</div><div class="column" style="width:70%;">
-<div class="cell">
-<div class="cell-output-display">
-<div>
-<figure>
-<p><img data-src="tutorial_files/figure-revealjs/plot_ac60-1.png" style="width:100.0%"></p>
-</figure>
-</div>
-</div>
-</div>
-</div></div>
-</section>
+
+<img data-src="tutorial_files/figure-revealjs/plot_ac60-1.png" style="width:100.0%" class="r-stretch"></section>
 <section id="non-wear-detection" class="slide level2">
 <h2>Non-wear Detection</h2>
 <p>Two of the most popular methods <span class="citation" data-cites="CHOI2011 troiano2014evolution">(<a href="#/references" role="doc-biblioref" onclick="">Choi et al. 2011</a>; <a href="#/references" role="doc-biblioref" onclick="">Troiano et al. 2014</a>)</span> are based on ActiGraph activity counts and have a specified window for finding zero counts with some flexibility of having spikes minutes of wear. These methods will be referred to as the Choi <span class="citation" data-cites="CHOI2011">(<a href="#/references" role="doc-biblioref" onclick="">Choi et al. 2011</a>)</span> and Troiano <span class="citation" data-cites="troiano2014evolution">(<a href="#/references" role="doc-biblioref" onclick="">Troiano et al. 2014</a>)</span> methods.</p>
@@ -1094,11 +1083,11 @@ $offset
 <blockquote>
 <p>“Troiano” defines non-wear time as intervals of at least 60 consecutive minutes of zero activity counts, allowing for up to two consecutive minutes of counts between 1 and 100 counts. The algorithm “Choi” defines non-wear times as periods of consecutive 0-counts of a certain duration. This duration is defined as “minimum length of non-wear times”. The default setting by the manufacturer is 90 min.</p>
 </blockquote>
-<p>These methods have been implemented in the <code>actigraph.sleepr</code> package. But first we will create activity counts.</p>
+<p>These methods have been implemented in the <code>actigraph.sleepr</code> package.</p>
 </section>
 <section id="estimating-non-wear-minutes" class="slide level2">
 <h2>Estimating Non-wear Minutes</h2>
-<p>From this minute-level activity counts data, we can run the Choi algorithm. First, we must rename the <code>time</code> column to <code>timestamp</code> and replace the columns with their lowercase counterpart:</p>
+<p>Rename the <code>time</code> column to <code>timestamp</code> and replace the columns with their lowercase counterpart for <code>actigraph.sleepr</code>:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb47"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a></a>data <span class="ot">=</span> ac60 <span class="sc">%&gt;%</span></span>
 <span id="cb47-2"><a></a>  <span class="fu">rename</span>(<span class="at">timestamp =</span> time,</span>
@@ -1129,7 +1118,9 @@ $offset
 6 2017-11-03 21:11:00.000 2017-11-04 07:49:00.000    638</code></pre>
 </div>
 </div>
-<h3 id="estimating-non-wear-minutes-1">Estimating Non-wear Minutes</h3>
+</section>
+<section id="estimating-non-wear-minutes-1" class="slide level2">
+<h2>Estimating Non-wear Minutes</h2>
 <ul>
 <li>We can transform this to be seconds instead of current bout format:</li>
 </ul>
@@ -1160,7 +1151,9 @@ $offset
 2      TRUE 5000</code></pre>
 </div>
 </div>
-<h3 id="plotting-non-wear">Plotting Non-wear</h3>
+</section>
+<section id="plotting-non-wear" class="slide level2">
+<h2>Plotting Non-wear</h2>
 <p>Overall, this looks like relatively clean data, but there are some segments (e.g.&nbsp;2017-11-01 at 20:00) that may be misclassified.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb56"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a></a>plot_data <span class="ot">=</span> data <span class="sc">%&gt;%</span> </span>
@@ -1175,9 +1168,19 @@ $offset
 <span id="cb56-10"><a></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> date, <span class="at">ncol =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="sec-mims" class="slide level2">
-<h2>Monitor-Independent Movement Summary (MIMS) Units</h2>
-<p><a href="https://github.com/mhealthgroup/mimsunit"><code>MIMSunit</code></a> package - calculate MIMS unit <span class="citation" data-cites="mims">(<a href="#/references" role="doc-biblioref" onclick="">John et al. 2019</a>)</span>: - interpolation of the signal to 100Hz, - extrapolate signal for regions that have hit the maximum/minimum acceleration units for the devic - band-pass filter from 0.2 to 5Hz, - absolute value of the area under the curve (AUC) using a trapezoidal rule, - truncates low signal values to <span class="math inline">\(0\)</span>.</p>
+<section id="mims-units" class="slide level2">
+<h2>MIMS Units</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
+<p><a href="https://github.com/mhealthgroup/mimsunit"><code>MIMSunit</code></a> package - calculate Monitor-Independent Movement Summary unit <span class="citation" data-cites="mims">(<a href="#/references" role="doc-biblioref" onclick="">John et al. 2019</a>)</span>:</p>
+<ul>
+<li>interpolation of the signal to 100Hz,</li>
+<li>extrapolate signal for regions that have hit the maximum/minimum acceleration units for the device</li>
+<li>band-pass filter from 0.2 to 5Hz,</li>
+<li>absolute value of the area under the curve (AUC) using a trapezoidal rule,</li>
+<li>truncates low signal values to <span class="math inline">\(0\)</span>.</li>
+</ul>
+</div><div class="column" style="width:50%;">
 <p>You may need to rename the <code>time</code> column to <code>HEADER_TIME_STAMP</code> for MIMS units depending on the version of the package:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb57"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a></a>dynamic_range <span class="ot">=</span> <span class="fu">c</span>(<span class="sc">-</span>acceleration_max, acceleration_max)</span>
@@ -1196,6 +1199,16 @@ $offset
 6 2017-10-30 15:05:00  7.216364</code></pre>
 </div>
 </div>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure>
+<p><img data-src="tutorial_files/figure-revealjs/plot_mims-1.png" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</div></div>
 </section>
 <section id="compare-mims-and-ac" class="slide level2">
 <h2>Compare MIMS and AC</h2>
@@ -1215,17 +1228,14 @@ $offset
 <img data-src="tutorial_files/figure-revealjs/unnamed-chunk-3-1.png" width="960" class="r-stretch"></section>
 <section id="step-counts" class="slide level2">
 <h2>Step Counts</h2>
-<p>We can load the environment as follows:</p>
+<p>Open source method for estimating stepcounts: https://github.com/OxWearables/stepcount <span class="citation" data-cites="stepcount">(<a href="#/references" role="doc-biblioref" onclick="">Small et al. 2024</a>)</span>, ported using <code>reticulate</code>.</p>
+<p>Must load module and then run (can use GPU):</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a></a>stepcount<span class="sc">::</span><span class="fu">use_stepcount_condaenv</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a></a>stepcount<span class="sc">::</span><span class="fu">unset_reticulate_python</span>()</span>
+<span id="cb62-2"><a></a>stepcount<span class="sc">::</span><span class="fu">use_stepcount_condaenv</span>()</span>
+<span id="cb62-3"><a></a>sc <span class="ot">=</span> stepcount<span class="sc">::</span><span class="fu">stepcount</span>(df, <span class="at">sample_rate =</span> sample_rate, <span class="at">model_type =</span> <span class="st">"ssl"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>The model has options to speed up operations using GPU (vs.&nbsp;CPU) processing, but can run relatively quickly on individual data and can be parallelized for each subject:</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb63"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a></a>stepcount<span class="sc">::</span><span class="fu">unset_reticulate_python</span>()</span>
-<span id="cb63-2"><a></a>stepcount<span class="sc">::</span><span class="fu">use_stepcount_condaenv</span>()</span>
-<span id="cb63-3"><a></a>sc <span class="ot">=</span> stepcount<span class="sc">::</span><span class="fu">stepcount</span>(df, <span class="at">sample_rate =</span> sample_rate, <span class="at">model_type =</span> <span class="st">"ssl"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>If no model is specified, the model is downloaded to a temporary directory, but users can use the <code>stepcount::sc_download_model</code> function to download the model file, store it, and pass it via the <code>model_path</code> argument. We can also pass in a vector of file names or a list of <code>data.frame</code>s to run this procedure for multiple data sets while only loading the model once.</p>
+<p>If no model is specified, the model is downloaded to a temporary directory, but users can use the <code>stepcount::sc_download_model</code> function to download the model file, store it, and pass it via the <code>model_path</code> argument.</p>
 </section>
 <section id="step-counts-1" class="slide level2">
 <h2>Step Counts</h2>
@@ -1233,30 +1243,14 @@ $offset
 <div class="column" style="width:50%;">
 <p>The output of <code>stepcount</code> is a list of different pieces of information, including information about the device:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a></a><span class="fu">names</span>(sc)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb63"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a></a><span class="fu">names</span>(sc)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "steps"      "walking"    "step_times" "info"      </code></pre>
 </div>
 </div>
-</div><div class="column" style="width:50%;">
-<p>The main elements of interest are the <code>data.frame</code> of estimated steps, which has the associated timestamps:</p>
+<p>A <code>data.frame</code> of flags for walking:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a></a><span class="fu">head</span>(sc<span class="sc">$</span>steps)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 6 × 2
-  time                    steps
-  &lt;dttm&gt;                  &lt;dbl&gt;
-1 2017-10-30 15:00:00.000     0
-2 2017-10-30 15:00:10.000     0
-3 2017-10-30 15:00:20.000     0
-4 2017-10-30 15:00:30.000     0
-5 2017-10-30 15:00:40.000     0
-6 2017-10-30 15:00:50.000     0</code></pre>
-</div>
-</div>
-<p>and similarly a <code>data.frame</code> of flagged time for walking:</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb68"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a></a><span class="fu">head</span>(sc<span class="sc">$</span>walking)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb65"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a></a><span class="fu">head</span>(sc<span class="sc">$</span>walking)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 2
   time                    walking
@@ -1269,17 +1263,42 @@ $offset
 6 2017-10-30 15:00:50.000       0</code></pre>
 </div>
 </div>
+</div><div class="column" style="width:50%;">
+<p>The main output of interest: <code>data.frame</code> of estimated steps:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb67"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a></a><span class="fu">head</span>(sc<span class="sc">$</span>steps)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 2
+  time                    steps
+  &lt;dttm&gt;                  &lt;dbl&gt;
+1 2017-10-30 15:00:00.000     0
+2 2017-10-30 15:00:10.000     0
+3 2017-10-30 15:00:20.000     0
+4 2017-10-30 15:00:30.000     0
+5 2017-10-30 15:00:40.000     0
+6 2017-10-30 15:00:50.000     0</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure>
+<p><img data-src="tutorial_files/figure-revealjs/plot_steps-1.png" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
 </div></div>
 </section>
 <section id="step-counts-aggregation" class="slide level2">
 <h2>Step Counts Aggregation</h2>
 <p>The <code>stepcount</code> method estimates steps in 10-second windows, which we can aggregate into minutes:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb70"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a></a>sc60 <span class="ot">=</span> sc<span class="sc">$</span>steps <span class="sc">%&gt;%</span> </span>
-<span id="cb70-2"><a></a>  <span class="fu">mutate</span>(<span class="at">time =</span> <span class="fu">floor_date</span>(time, <span class="st">"1 minute"</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb70-3"><a></a>  <span class="fu">group_by</span>(time) <span class="sc">%&gt;%</span> </span>
-<span id="cb70-4"><a></a>  <span class="fu">summarise</span>(<span class="at">steps =</span> <span class="fu">sum</span>(steps), <span class="at">.groups =</span> <span class="st">"drop"</span>)</span>
-<span id="cb70-5"><a></a><span class="fu">head</span>(sc60)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb69"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a></a>sc60 <span class="ot">=</span> sc<span class="sc">$</span>steps <span class="sc">%&gt;%</span> </span>
+<span id="cb69-2"><a></a>  <span class="fu">mutate</span>(<span class="at">time =</span> <span class="fu">floor_date</span>(time, <span class="st">"1 minute"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb69-3"><a></a>  <span class="fu">group_by</span>(time) <span class="sc">%&gt;%</span> </span>
+<span id="cb69-4"><a></a>  <span class="fu">summarise</span>(<span class="at">steps =</span> <span class="fu">sum</span>(steps), <span class="at">.groups =</span> <span class="st">"drop"</span>)</span>
+<span id="cb69-5"><a></a><span class="fu">head</span>(sc60)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 2
   time                    steps
@@ -1295,27 +1314,51 @@ $offset
 </section>
 <section id="steps-per-minute" class="slide level2">
 <h2>Steps Per Minute</h2>
-<div class="columns">
-<div class="column" style="width:30%;">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb72"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a></a>sc60 <span class="sc">%&gt;%</span> </span>
-<span id="cb72-2"><a></a>  <span class="fu">mutate</span>(<span class="at">date =</span> lubridate<span class="sc">::</span><span class="fu">as_date</span>(time),</span>
-<span id="cb72-3"><a></a>         <span class="at">hourtime =</span> hms<span class="sc">::</span><span class="fu">as_hms</span>(time)) <span class="sc">%&gt;%</span> </span>
-<span id="cb72-4"><a></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> hourtime, <span class="at">y =</span> steps)) <span class="sc">+</span> </span>
-<span id="cb72-5"><a></a>  <span class="fu">geom_step</span>() <span class="sc">+</span></span>
-<span id="cb72-6"><a></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> date, <span class="at">ncol =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a></a>sc60 <span class="sc">%&gt;%</span> </span>
+<span id="cb71-2"><a></a>  <span class="fu">mutate</span>(<span class="at">date =</span> lubridate<span class="sc">::</span><span class="fu">as_date</span>(time),</span>
+<span id="cb71-3"><a></a>         <span class="at">hourtime =</span> hms<span class="sc">::</span><span class="fu">as_hms</span>(time)) <span class="sc">%&gt;%</span> </span>
+<span id="cb71-4"><a></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> hourtime, <span class="at">y =</span> steps)) <span class="sc">+</span> </span>
+<span id="cb71-5"><a></a>  <span class="fu">geom_step</span>() <span class="sc">+</span></span>
+<span id="cb71-6"><a></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> date, <span class="at">ncol =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-</div><div class="column" style="width:70%;">
+
+<img data-src="tutorial_files/figure-revealjs/plot_sc60-1.png" style="width:100.0%" class="r-stretch"></section>
+<section id="steps-vs-ac" class="slide level2">
+<h2>Steps vs AC</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
 <div class="cell">
 <div class="cell-output-display">
 <div>
 <figure>
-<p><img data-src="tutorial_files/figure-revealjs/plot_sc60-1.png" style="width:100.0%"></p>
+<p><img data-src="tutorial_files/figure-revealjs/plot_ac60_2-1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+</div><div class="column" style="width:50%;">
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure>
+<p><img data-src="tutorial_files/figure-revealjs/plot_sc60_2-1.png" style="width:100.0%"></p>
 </figure>
 </div>
 </div>
 </div>
 </div></div>
+</section>
+<section id="conclusions" class="slide level2">
+<h2>Conclusions</h2>
+<ul>
+<li>Can go from Raw Data to Counts/Steps</li>
+<li>Wear time can be done using counts even if not using them (doesn’t catch everything)</li>
+<li>Need better quick plots for 1000s of participants</li>
+<li>A number of other metrics exist</li>
+<li>Can embarrassingly parallelize the processing</li>
+<li>We give NHANES derivatives</li>
+</ul>
 </section>
 <section id="not-discussed" class="slide level2">
 <h2>Not Discussed</h2>
@@ -1360,6 +1403,9 @@ Knaier, Raphael, Christoph Höchsmann, Denis Infanger, Timo Hinrichs, and Arno S
 </div>
 <div id="ref-neishabouri2022quantification" class="csl-entry" role="listitem">
 Neishabouri, Ali, Joe Nguyen, John Samuelsson, Tyler Guthrie, Matt Biggs, Jeremy Wyatt, Doug Cross, et al. 2022. <span>“Quantification of Acceleration as Activity Counts in <span>ActiGraph</span> Wearable.”</span> <em>Scientific Reports</em> 12 (1): 11958.
+</div>
+<div id="ref-stepcount" class="csl-entry" role="listitem">
+Small, Scott R, Shing Chan, Rosemary Walmsley, Lennart von Fritsch, Aidan Acquah, Gert Mertes, Benjamin G Feakins, et al. 2024. <span>“Self-Supervised Machine Learning to Characterize Step Counts from Wrist-Worn Accelerometers in the <span>UK</span> <span>B</span>iobank.”</span> <em>Medicine and Science in Sports and Exercise</em> 56 (10): 1945.
 </div>
 <div id="ref-troiano2014evolution" class="csl-entry" role="listitem">
 Troiano, Richard P, James J McClain, Robert J Brychta, and Kong Y Chen. 2014. <span>“Evolution of Accelerometer Methods for Physical Activity Research.”</span> <em>British Journal of Sports Medicine</em> 48 (13): 1019–23.

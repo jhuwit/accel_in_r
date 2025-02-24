@@ -3,12 +3,15 @@ project:
   output-dir: docs
 
 website:
-  title: "Accelerometry Analysis and Processing in R"
+  title: "Accelerometry in R"
   navbar:
     left:
       - href: index.qmd
-        text: Home/About
-      - tutorial.qmd
+        text: About
+      - href: tutorial.qmd
+        text: Tutorial
+  repo-url: https://github.com/jhuwit/accel_in_r
+  image: images/WIT.png
 
 format:
   html:
