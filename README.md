@@ -8,9 +8,8 @@
 <!-- badges: end -->
 
 This repository is a short course/tutorial on analyzing and processing
-accelerometry data in R. The tutorial is written in
-[Quarto](https://quarto.org/) and is available as a [PDF](tutorial.pdf)
-and [HTML](tutorial.html) file.
+accelerometry data in R. The slides are hosted at
+<https://jhuwit.github.io/accel_in_r/>.
 
 # Repository Structure
 
