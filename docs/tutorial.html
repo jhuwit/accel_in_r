@@ -423,11 +423,20 @@ John Muschelli and Lily Koffman
 </div>
 
 </section>
-<section id="introduction-to-accelerometer-data" class="slide level2">
-<h2>Introduction to Accelerometer Data</h2>
-<h3 id="learning-objectives">Learning Objectives</h3>
+<section id="not-discussed" class="slide level2">
+<h2>Not Discussed</h2>
 <ul>
-<li>Understand the basics of procewssing accelerometer data</li>
+<li>GGIR</li>
+<li>MVPA/Thresholds</li>
+<li>Sedentary time</li>
+<li>Sleep estimation</li>
+<li>Population analysis/Lasagna plots</li>
+</ul>
+</section>
+<section id="learning-objectives" class="slide level2">
+<h2>Learning Objectives</h2>
+<ul>
+<li>Understand the basics of processing accelerometer data</li>
 <li>GT3X -&gt; CSV/Activity Counts/Steps</li>
 <li>Open source methods in R</li>
 <li>Many of the methods either have a Python analog</li>
@@ -919,7 +928,7 @@ Serial Number Prefix: MOS
 </div>
 </div>
 </section>
-<section id="plot-all-data-1" class="slide level2">
+<section id="plot-all-data-1" class="slide level2 scrollable">
 <h2>Plot all data</h2>
 <div class="columns">
 <div class="column" style="width:40%;">
@@ -1155,18 +1164,32 @@ $offset
 <section id="plotting-non-wear" class="slide level2">
 <h2>Plotting Non-wear</h2>
 <p>Overall, this looks like relatively clean data, but there are some segments (e.g.&nbsp;2017-11-01 at 20:00) that may be misclassified.</p>
+<div class="columns">
+<div class="column" style="width:40%;">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a></a>plot_data <span class="ot">=</span> data <span class="sc">%&gt;%</span> </span>
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a></a>data <span class="sc">%&gt;%</span> </span>
 <span id="cb56-2"><a></a>  <span class="fu">rename</span>(<span class="at">time =</span> timestamp) <span class="sc">%&gt;%</span> </span>
 <span id="cb56-3"><a></a>  <span class="fu">mutate</span>(<span class="at">date =</span> lubridate<span class="sc">::</span><span class="fu">as_date</span>(time),</span>
 <span id="cb56-4"><a></a>         <span class="at">hourtime =</span> hms<span class="sc">::</span><span class="fu">as_hms</span>(time)) <span class="sc">%&gt;%</span> </span>
-<span id="cb56-5"><a></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> time, <span class="at">y =</span> AC)) <span class="sc">+</span> </span>
+<span id="cb56-5"><a></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> hourtime, <span class="at">y =</span> AC)) <span class="sc">+</span> </span>
 <span id="cb56-6"><a></a>  <span class="fu">geom_segment</span>(</span>
-<span id="cb56-7"><a></a>    <span class="fu">aes</span>(<span class="at">x =</span> time, <span class="at">xend =</span> time,</span>
+<span id="cb56-7"><a></a>    <span class="fu">aes</span>(<span class="at">x =</span> hourtime, <span class="at">xend =</span> hourtime,</span>
 <span id="cb56-8"><a></a>        <span class="at">y =</span> <span class="sc">-</span><span class="cn">Inf</span>, <span class="at">yend =</span> <span class="cn">Inf</span>, <span class="at">color =</span> choi_wear), <span class="at">alpha =</span> <span class="fl">0.25</span>) <span class="sc">+</span> </span>
 <span id="cb56-9"><a></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
-<span id="cb56-10"><a></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> date, <span class="at">ncol =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb56-10"><a></a>  <span class="fu">guides</span>(<span class="at">color =</span> <span class="fu">guide_legend</span>(<span class="at">position =</span> <span class="st">"top"</span>)) <span class="sc">+</span> </span>
+<span id="cb56-11"><a></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> date, <span class="at">ncol =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+</div><div class="column" style="width:60%;">
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure>
+<p><img data-src="tutorial_files/figure-revealjs/choi_plot-1.png" width="1152"></p>
+</figure>
+</div>
+</div>
+</div>
+</div></div>
 </section>
 <section id="mims-units" class="slide level2">
 <h2>MIMS Units</h2>
@@ -1225,7 +1248,7 @@ $offset
 <span id="cb61-2"><a></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> MIMS_UNIT, <span class="at">y =</span> AC)) <span class="sc">+</span> <span class="fu">geom_point</span>() <span class="sc">+</span> <span class="fu">geom_smooth</span>(<span class="at">se =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 
 </div>
-<img data-src="tutorial_files/figure-revealjs/unnamed-chunk-3-1.png" width="960" class="r-stretch"></section>
+<img data-src="tutorial_files/figure-revealjs/unnamed-chunk-2-1.png" width="960" class="r-stretch"></section>
 <section id="step-counts" class="slide level2">
 <h2>Step Counts</h2>
 <p>Open source method for estimating stepcounts: https://github.com/OxWearables/stepcount <span class="citation" data-cites="stepcount">(<a href="#/references" role="doc-biblioref" onclick="">Small et al. 2024</a>)</span>, ported using <code>reticulate</code>.</p>
@@ -1332,7 +1355,7 @@ $offset
 <div class="cell-output-display">
 <div>
 <figure>
-<p><img data-src="tutorial_files/figure-revealjs/plot_ac60_2-1.png" style="width:100.0%"></p>
+<p><img data-src="tutorial_files/figure-revealjs/plot_ac60_2-1.png" style="width:75.0%"></p>
 </figure>
 </div>
 </div>
@@ -1342,7 +1365,7 @@ $offset
 <div class="cell-output-display">
 <div>
 <figure>
-<p><img data-src="tutorial_files/figure-revealjs/plot_sc60_2-1.png" style="width:100.0%"></p>
+<p><img data-src="tutorial_files/figure-revealjs/plot_sc60_2-1.png" style="width:75.0%"></p>
 </figure>
 </div>
 </div>
@@ -1358,16 +1381,6 @@ $offset
 <li>A number of other metrics exist</li>
 <li>Can embarrassingly parallelize the processing</li>
 <li>We give NHANES derivatives</li>
-</ul>
-</section>
-<section id="not-discussed" class="slide level2">
-<h2>Not Discussed</h2>
-<ul>
-<li>GGIR</li>
-<li>MVPA/Thresholds</li>
-<li>Sedentary time</li>
-<li>Sleep estimation</li>
-<li>Population analysis/Lasagna plots</li>
 </ul>
 </section></section>
 <section id="references" class="title-slide slide level1 smaller scrollable">

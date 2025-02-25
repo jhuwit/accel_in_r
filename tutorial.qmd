@@ -22,11 +22,19 @@ library(dplyr)
 knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
 ```
 
-## Introduction to Accelerometer Data
+## Not Discussed
 
-### Learning Objectives
+- GGIR
+- MVPA/Thresholds
+- Sedentary time
+- Sleep estimation
+- Population analysis/Lasagna plots
 
-- Understand the basics of procewssing accelerometer data
+
+
+## Learning Objectives
+
+- Understand the basics of processing accelerometer data
 - GT3X -> CSV/Activity Counts/Steps
 - Open source methods in R
 - Many of the methods either have a Python analog
@@ -38,6 +46,7 @@ Speaker notes go here.
 :::
 
 ---
+
 
 ## What is Accelerometer Data?
 
@@ -86,7 +95,6 @@ Timestamp                  X        Y        Z
 #| height: 400px
 knitr::include_graphics(here::here("images/silly_walks.gif"))
 ```
-
 
 ---
 
@@ -140,6 +148,9 @@ knitr::include_graphics(here::here("images/silly_walks.gif"))
 :::
 
 ::::
+
+
+
 
 ## Data
 
@@ -405,7 +416,7 @@ library(ggplot2); library(lubridate)
 ```
 
 
-##  Plot all data
+##  Plot all data {.scrollable}
 
 :::: {.columns}
 
@@ -604,7 +615,7 @@ head(choi_nonwear)
 
 - We can transform this to be seconds instead of current bout format:
 
-```{r}
+```{r choi_df}
 choi_df = purrr::map2_df(
   choi_nonwear$period_start, choi_nonwear$period_end,
   function(from, to) {
@@ -624,20 +635,40 @@ data %>%
 
 Overall, this looks like relatively clean data, but there are some segments (e.g. 2017-11-01 at 20:00) that may be misclassified.
 
-```{r choi_plot}
-#| fig-height: 10
-#| fig-width: 12
-plot_data = data %>% 
+
+:::: {.columns}
+
+::: {.column width="40%"}
+
+```{r choi_plot_show}
+#| eval: false
+data %>% 
   rename(time = timestamp) %>% 
   mutate(date = lubridate::as_date(time),
          hourtime = hms::as_hms(time)) %>% 
-  ggplot(aes(x = time, y = AC)) + 
+  ggplot(aes(x = hourtime, y = AC)) + 
   geom_segment(
-    aes(x = time, xend = time,
+    aes(x = hourtime, xend = hourtime,
         y = -Inf, yend = Inf, color = choi_wear), alpha = 0.25) + 
   geom_line() +
+  guides(color = guide_legend(position = "top")) + 
   facet_wrap(~ date, ncol = 1)
 ```
+
+:::
+
+::: {.column width="60%"}
+
+```{r choi_plot}
+#| dependson: choi_plot_show
+#| echo: false
+#| fig-height: 10
+#| fig-width: 12
+<<choi_plot_show>>
+```
+
+:::
+::::
 
 
 
@@ -799,8 +830,8 @@ sc60 %>%
 ```{r plot_ac60_2}
 #| dependson: plot_ac60_show
 #| echo: false
-#| out-width: "100%"
-#| fig-height: 10
+#| out-width: "75%"
+#| fig-height: 8
 #| fig-width: 5
 <<plot_ac60_show>>
 ```
@@ -813,8 +844,8 @@ sc60 %>%
 ```{r plot_sc60_2}
 #| dependson: plot_sc60_show
 #| echo: false
-#| out-width: "100%"
-#| fig-height: 10
+#| out-width: "75%"
+#| fig-height: 8
 #| fig-width: 5
 <<plot_sc60_show>>
 ```
@@ -830,13 +861,5 @@ sc60 %>%
 - A number of other metrics exist
 - Can embarrassingly parallelize the processing
 - We give NHANES derivatives
-
-## Not Discussed
-
-- GGIR
-- MVPA/Thresholds
-- Sedentary time
-- Sleep estimation
-- Population analysis/Lasagna plots
 
 # References

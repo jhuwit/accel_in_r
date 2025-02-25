@@ -4,14 +4,21 @@
     "href": "index.html",
     "title": "About",
     "section": "",
-    "text": "This is a tutorial on how to process wrist-worn accelerometer data, going from reading in the data, creating actviity counts, estimating non-wear, and estimating steps.\n\nJohn Muschelli: https://publichealth.jhu.edu/faculty/2438/john-muschelli/https://johnmuschelli.com/\nLily Koffman: https://www.lilykoff.com/about/"
+    "text": "This is a tutorial on how to process wrist-worn accelerometer data, going from reading in the data, creating activity counts, estimating non-wear, and estimating steps.\n\nJohn Muschelli: https://johnmuschelli.com/\nLily Koffman"
   },
   {
-    "objectID": "tutorial.html#introduction-to-accelerometer-data",
-    "href": "tutorial.html#introduction-to-accelerometer-data",
+    "objectID": "tutorial.html#not-discussed",
+    "href": "tutorial.html#not-discussed",
     "title": "Introduction to Accelerometer Data",
-    "section": "Introduction to Accelerometer Data",
-    "text": "Introduction to Accelerometer Data\nLearning Objectives\n\nUnderstand the basics of procewssing accelerometer data\nGT3X -&gt; CSV/Activity Counts/Steps\nOpen source methods in R\nMany of the methods either have a Python analog\nLots are R wrapper for Python libraries\nGGIR\n\n\nSpeaker notes go here."
+    "section": "Not Discussed",
+    "text": "Not Discussed\n\nGGIR\nMVPA/Thresholds\nSedentary time\nSleep estimation\nPopulation analysis/Lasagna plots"
+  },
+  {
+    "objectID": "tutorial.html#learning-objectives",
+    "href": "tutorial.html#learning-objectives",
+    "title": "Introduction to Accelerometer Data",
+    "section": "Learning Objectives",
+    "text": "Learning Objectives\n\nUnderstand the basics of processing accelerometer data\nGT3X -&gt; CSV/Activity Counts/Steps\nOpen source methods in R\nMany of the methods either have a Python analog\nLots are R wrapper for Python libraries\nGGIR\n\n\nSpeaker notes go here."
   },
   {
     "objectID": "tutorial.html#what-is-accelerometer-data",
@@ -221,7 +228,7 @@
     "href": "tutorial.html#plotting-non-wear",
     "title": "Introduction to Accelerometer Data",
     "section": "Plotting Non-wear",
-    "text": "Plotting Non-wear\nOverall, this looks like relatively clean data, but there are some segments (e.g. 2017-11-01 at 20:00) that may be misclassified.\n\nplot_data = data %&gt;% \n  rename(time = timestamp) %&gt;% \n  mutate(date = lubridate::as_date(time),\n         hourtime = hms::as_hms(time)) %&gt;% \n  ggplot(aes(x = time, y = AC)) + \n  geom_segment(\n    aes(x = time, xend = time,\n        y = -Inf, yend = Inf, color = choi_wear), alpha = 0.25) + \n  geom_line() +\n  facet_wrap(~ date, ncol = 1)"
+    "text": "Plotting Non-wear\nOverall, this looks like relatively clean data, but there are some segments (e.g. 2017-11-01 at 20:00) that may be misclassified.\n\n\n\ndata %&gt;% \n  rename(time = timestamp) %&gt;% \n  mutate(date = lubridate::as_date(time),\n         hourtime = hms::as_hms(time)) %&gt;% \n  ggplot(aes(x = hourtime, y = AC)) + \n  geom_segment(\n    aes(x = hourtime, xend = hourtime,\n        y = -Inf, yend = Inf, color = choi_wear), alpha = 0.25) + \n  geom_line() +\n  guides(color = guide_legend(position = \"top\")) + \n  facet_wrap(~ date, ncol = 1)"
   },
   {
     "objectID": "tutorial.html#mims-units",
@@ -278,12 +285,5 @@
     "title": "Introduction to Accelerometer Data",
     "section": "Conclusions",
     "text": "Conclusions\n\nCan go from Raw Data to Counts/Steps\nWear time can be done using counts even if not using them (doesn’t catch everything)\nNeed better quick plots for 1000s of participants\nA number of other metrics exist\nCan embarrassingly parallelize the processing\nWe give NHANES derivatives"
-  },
-  {
-    "objectID": "tutorial.html#not-discussed",
-    "href": "tutorial.html#not-discussed",
-    "title": "Introduction to Accelerometer Data",
-    "section": "Not Discussed",
-    "text": "Not Discussed\n\nGGIR\nMVPA/Thresholds\nSedentary time\nSleep estimation\nPopulation analysis/Lasagna plots"
   }
 ]
